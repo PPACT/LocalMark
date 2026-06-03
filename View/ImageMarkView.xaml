@@ -1,0 +1,61 @@
+<Window x:Class="LocalMark.View.ImageMarkView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:LocalMark.ViewModel"
+        xmlns:cvt="clr-namespace:LocalMark.Converters"
+        Title="图片标注" Height="600" Width="900"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip">
+    <Window.Resources>
+        <cvt:PathToImageConverter x:Key="PathToImageConverter" />
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 标签选择 -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <Label Content="选择标注标签：" VerticalAlignment="Center" />
+            <ComboBox ItemsSource="{Binding Labels}"
+                      SelectedItem="{Binding SelectedLabel}"
+                      DisplayMemberPath="Name"
+                      MinWidth="150" />
+            <Label Content="（在图片上拖拽绘制标注框）" Foreground="Gray"
+                   VerticalAlignment="Center" Margin="20,0,0,0" />
+        </StackPanel>
+
+        <!-- 图片 + 标注画布 -->
+        <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1"
+                ClipToBounds="True">
+            <Grid>
+                <Image x:Name="ImgDisplay"
+                       Source="{Binding ImagePath, Converter={StaticResource PathToImageConverter}}"
+                       Stretch="Uniform" />
+                <Canvas x:Name="MarkCanvas"
+                        MouseLeftButtonDown="Canvas_MouseLeftButtonDown"
+                        MouseMove="Canvas_MouseMove"
+                        MouseLeftButtonUp="Canvas_MouseLeftButtonUp"
+                        Background="Transparent">
+                    <Rectangle x:Name="MarkRect"
+                               Stroke="Red" StrokeThickness="2"
+                               Fill="Transparent"
+                               Visibility="Collapsed" />
+                </Canvas>
+            </Grid>
+        </Border>
+
+        <!-- 按钮 -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="清除标注框" Click="ClearBox_Click"
+                    Width="90" Margin="0,0,10,0" />
+            <Button Content="保存" Command="{Binding SaveCommand}"
+                    Width="80" Margin="0,0,10,0" FontWeight="Bold" />
+            <Button Content="取消" Command="{Binding CloseWindowCommand}"
+                    Width="80" />
+        </StackPanel>
+    </Grid>
+</Window>

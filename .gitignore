@@ -1,0 +1,16 @@
+# .NET Build
+bin/
+obj/
+
+# SQLite Database
+*.db
+
+# IDE
+.vs/
+*.suo
+*.user
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

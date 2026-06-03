@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LabelRoot>
+  <!-- 文本分类标签：用于文本标注 -->
+  <TextLabels>
+    <Label>好评</Label>
+    <Label>差评</Label>
+    <Label>无关内容</Label>
+  </TextLabels>
+  <!-- 图片目标标签：用于图片矩形框标注 -->
+  <ImageLabels>
+    <Label>行人</Label>
+    <Label>机动车</Label>
+    <Label>非机动车</Label>
+  </ImageLabels>
+</LabelRoot>
