@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using LocalMark.Model;
 
 namespace LocalMark.Helper;
@@ -22,7 +24,10 @@ public class OllamaAgent
     public async Task<List<DetectedObject>> AnnotateImageAsync(
         string imagePath, List<string> labels, CancellationToken ct = default)
     {
-        var imageB64 = Convert.ToBase64String(await File.ReadAllBytesAsync(imagePath, ct));
+        var imageBytes = await File.ReadAllBytesAsync(imagePath, ct);
+        var (resizedBytes, scale) = ResizeImage(imageBytes, 1024);
+
+        var imageB64 = Convert.ToBase64String(resizedBytes);
         var prompt = BuildPrompt(labels);
 
         var payload = new
@@ -45,8 +50,39 @@ public class OllamaAgent
 
         if (result == null) return [];
 
-        return TryParseJson(result.Response, labels)
-               ?? FallbackParse(result.Response, labels);
+        var detections = TryParseJson(result.Response, labels)
+                         ?? FallbackParse(result.Response, labels);
+
+        return detections.Select(d =>
+        {
+            d.X = d.X / scale;
+            d.Y = d.Y / scale;
+            d.Width = d.Width / scale;
+            d.Height = d.Height / scale;
+            return d;
+        }).ToList();
+    }
+
+    private static (byte[] imageBytes, double scale) ResizeImage(byte[] original, int maxDimension)
+    {
+        using var inStream = new MemoryStream(original);
+        var decoder = BitmapDecoder.Create(inStream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
+        var frame = decoder.Frames[0];
+        var w = frame.PixelWidth;
+        var h = frame.PixelHeight;
+        var max = Math.Max(w, h);
+
+        if (max <= maxDimension) return (original, 1.0);
+
+        var scale = maxDimension / (double)max;
+        var transform = new ScaleTransform(scale, scale);
+        var scaled = new TransformedBitmap(frame, transform);
+
+        var encoder = new JpegBitmapEncoder { QualityLevel = 85 };
+        encoder.Frames.Add(BitmapFrame.Create(scaled));
+        using var outStream = new MemoryStream();
+        encoder.Save(outStream);
+        return (outStream.ToArray(), scale);
     }
 
     private static string BuildPrompt(List<string> labels)
