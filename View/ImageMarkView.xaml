@@ -8,6 +8,8 @@
         ResizeMode="CanResizeWithGrip">
     <Window.Resources>
         <cvt:PathToImageConverter x:Key="PathToImageConverter" />
+        <cvt:BoolInvertConverter x:Key="BoolInvert" />
+        <cvt:BoolToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -50,6 +52,14 @@
         <!-- 按钮 -->
         <StackPanel Grid.Row="2" Orientation="Horizontal"
                     HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="AI 标注" Command="{Binding AiMarkCommand}"
+                    Width="80" Margin="0,0,20,0"
+                    IsEnabled="{Binding IsAiRunning, Converter={StaticResource BoolInvert}}"
+                    ToolTip="调用 Qwen2.5-VL 自动检测目标" />
+            <TextBlock Text="AI 分析中..."
+                       Visibility="{Binding IsAiRunning, Converter={StaticResource BoolToVis}}"
+                       Foreground="#FF8800" VerticalAlignment="Center"
+                       Margin="0,0,10,0" />
             <Button Content="清除标注框" Click="ClearBox_Click"
                     Width="90" Margin="0,0,10,0" />
             <Button Content="保存" Command="{Binding SaveCommand}"

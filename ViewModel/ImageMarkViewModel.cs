@@ -13,6 +13,7 @@ public partial class ImageMarkViewModel : ObservableObject
 {
     private readonly SourceRepo _sourceRepo = new();
     private readonly MarkRepo _markRepo = new();
+    private readonly OllamaAgent _agent = new();
 
     private static readonly string ConfigPath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "Config", "LabelConfig.xml");
@@ -38,9 +39,16 @@ public partial class ImageMarkViewModel : ObservableObject
     [ObservableProperty]
     private double _boxHeight;
 
+    [ObservableProperty]
+    private bool _isAiRunning;
+
+    [ObservableProperty]
+    private string _aiStatus = string.Empty;
+
     public SourceData Source { get; }
 
     public event Action<ImageMarkViewModel>? MarkSaved;
+    public event Action<List<DetectedObject>>? AiMarkCompleted;
 
     public ImageMarkViewModel(SourceData source)
     {
@@ -48,14 +56,12 @@ public partial class ImageMarkViewModel : ObservableObject
         ImagePath = source.Content;
         LoadLabels();
 
-        // 加载已有标注框
         var existing = _markRepo.GetBySourceId(source.Id);
         if (existing != null)
         {
             var label = Labels.FirstOrDefault(l => l.Name == existing.LabelName);
             if (label != null) SelectedLabel = label;
 
-            // 解析已保存的坐标
             if (!string.IsNullOrEmpty(existing.BoxPosition))
             {
                 var box = JsonSerializer.Deserialize<Box>(existing.BoxPosition);
@@ -74,6 +80,24 @@ public partial class ImageMarkViewModel : ObservableObject
     {
         Labels = new ObservableCollection<LabelItem>(
             XmlHelper.LoadImageLabels(ConfigPath));
+    }
+
+    [RelayCommand]
+    private async Task AiMark()
+    {
+        if (!File.Exists(ImagePath)) return;
+        IsAiRunning = true;
+
+        try
+        {
+            var labels = Labels.Select(l => l.Name).ToList();
+            var results = await _agent.AnnotateImageAsync(ImagePath, labels);
+            AiMarkCompleted?.Invoke(results);
+        }
+        finally
+        {
+            IsAiRunning = false;
+        }
     }
 
     [RelayCommand]
