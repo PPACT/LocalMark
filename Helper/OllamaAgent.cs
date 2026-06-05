@@ -88,25 +88,45 @@ public class OllamaAgent
     private static string BuildPrompt(List<string> labels)
     {
         var labelList = string.Join("、", labels);
-        return "分析这张图片。你只能使用以下" + labels.Count + "个标签来标注物体："
-               + labelList + "。只标注清晰可见、距离适中的主要目标（不超过10个）。"
-               + "对每个目标输出JSON数组，每个元素格式："
-               + @"{""label"": ""标签名"", ""bbox_2d"": [x1,y1,x2,y2]}。"
+        return "逐一检查这张图片中的所有目标，每个目标独立标注一个框。"
+               + "使用以下" + labels.Count + "个标签："
+               + labelList + "。"
+               + "标注规则：每个目标单独画框（不可合并），可见部分超过50%才标注。"
+               + "输出JSON数组，格式："
+               + @"[{""label"": ""标签名"", ""bbox_2d"": [x1,y1,x2,y2]}]。"
                + "确保 x1<x2 且 y1<y2。";
     }
 
     private static List<DetectedObject>? TryParseJson(string text, List<string> validLabels)
     {
+        // 格式1: [{ "label": "...", "bbox_2d": [...] }]
         try
         {
             var raw = JsonSerializer.Deserialize<List<RawDetection>>(text);
-            if (raw == null || raw.Count == 0) return null;
-            return raw.Select(r => ToDetectedObject(r, validLabels)).ToList();
+            if (raw is { Count: > 0 })
+                return raw.Select(r => ToDetectedObject(r, validLabels)).ToList();
         }
-        catch
+        catch { }
+
+        // 格式2: { "机动车": [{"bbox_2d": [...]}], "行人": [...] }
+        try
         {
-            return null;
+            var dict = JsonSerializer.Deserialize<Dictionary<string, List<BboxOnly>>>(text);
+            if (dict is { Count: > 0 })
+            {
+                var results = new List<DetectedObject>();
+                foreach (var (label, boxes) in dict)
+                    foreach (var box in boxes)
+                    {
+                        var rd = new RawDetection { Label = label, Bbox2D = box.Bbox2D };
+                        results.Add(ToDetectedObject(rd, validLabels));
+                    }
+                return results;
+            }
         }
+        catch { }
+
+        return null;
     }
 
     private static List<DetectedObject> FallbackParse(string text, List<string> validLabels)
@@ -155,6 +175,12 @@ public class OllamaAgent
         [JsonPropertyName("label")]
         public string Label { get; set; } = string.Empty;
 
+        [JsonPropertyName("bbox_2d")]
+        public double[] Bbox2D { get; set; } = [];
+    }
+
+    private class BboxOnly
+    {
         [JsonPropertyName("bbox_2d")]
         public double[] Bbox2D { get; set; } = [];
     }
