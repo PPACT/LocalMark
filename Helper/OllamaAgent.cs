@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using LocalMark.Model;
 
@@ -25,9 +24,18 @@ public class OllamaAgent
         string imagePath, List<string> labels, CancellationToken ct = default)
     {
         var imageBytes = await File.ReadAllBytesAsync(imagePath, ct);
-        var (resizedBytes, scale) = ResizeImage(imageBytes, 1024);
 
-        var imageB64 = Convert.ToBase64String(resizedBytes);
+        // 读取原图尺寸，用于坐标边界裁剪
+        int origW, origH;
+        using (var ms = new MemoryStream(imageBytes))
+        {
+            var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
+            origW = decoder.Frames[0].PixelWidth;
+            origH = decoder.Frames[0].PixelHeight;
+        }
+
+        // 直接发原图，模型返回的坐标就是原图像素坐标，无需缩放
+        var imageB64 = Convert.ToBase64String(imageBytes);
         var prompt = BuildPrompt(labels);
 
         var payload = new
@@ -55,34 +63,12 @@ public class OllamaAgent
 
         return detections.Select(d =>
         {
-            d.X = d.X / scale;
-            d.Y = d.Y / scale;
-            d.Width = d.Width / scale;
-            d.Height = d.Height / scale;
+            d.X = Math.Clamp(d.X, 0, origW - 1);
+            d.Y = Math.Clamp(d.Y, 0, origH - 1);
+            d.Width = Math.Clamp(d.Width, 1, origW - d.X);
+            d.Height = Math.Clamp(d.Height, 1, origH - d.Y);
             return d;
         }).ToList();
-    }
-
-    private static (byte[] imageBytes, double scale) ResizeImage(byte[] original, int maxDimension)
-    {
-        using var inStream = new MemoryStream(original);
-        var decoder = BitmapDecoder.Create(inStream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
-        var frame = decoder.Frames[0];
-        var w = frame.PixelWidth;
-        var h = frame.PixelHeight;
-        var max = Math.Max(w, h);
-
-        if (max <= maxDimension) return (original, 1.0);
-
-        var scale = maxDimension / (double)max;
-        var transform = new ScaleTransform(scale, scale);
-        var scaled = new TransformedBitmap(frame, transform);
-
-        var encoder = new JpegBitmapEncoder { QualityLevel = 85 };
-        encoder.Frames.Add(BitmapFrame.Create(scaled));
-        using var outStream = new MemoryStream();
-        encoder.Save(outStream);
-        return (outStream.ToArray(), scale);
     }
 
     private static string BuildPrompt(List<string> labels)
@@ -149,6 +135,8 @@ public class OllamaAgent
 
     private static DetectedObject ToDetectedObject(RawDetection raw, List<string> validLabels)
     {
+        if (raw.Bbox2D.Length < 4) return new DetectedObject { Label = raw.Label };
+
         var x1 = raw.Bbox2D[0];
         var y1 = raw.Bbox2D[1];
         var x2 = raw.Bbox2D[2];
