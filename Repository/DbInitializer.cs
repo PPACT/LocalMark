@@ -21,6 +21,22 @@ public static class DbInitializer
         {
             CreateTables();
         }
+
+        Migrate();
+    }
+
+    private static void Migrate()
+    {
+        using var conn = new SqliteConnection(ConnectionString);
+        conn.Open();
+        // 为旧数据库补充 SourceName 列
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE SourceData ADD COLUMN SourceName NVARCHAR DEFAULT ''";
+            cmd.ExecuteNonQuery();
+        }
+        catch { /* 列已存在则忽略 */ }
     }
 
     public static string GetConnectionString() => ConnectionString;
@@ -36,6 +52,7 @@ public static class DbInitializer
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 DataType INTEGER NOT NULL,
                 Content NVARCHAR NOT NULL,
+                SourceName NVARCHAR DEFAULT '',
                 IsMarked INTEGER DEFAULT 0
             );
 

@@ -10,6 +10,7 @@
     <Window.Resources>
         <cvt:DataTypeConverter x:Key="DataTypeConverter" />
         <cvt:MarkedStatusConverter x:Key="MarkedStatusConverter" />
+        <cvt:IndexPlusOneConverter x:Key="IndexConverter" />
         <Style TargetType="Button">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Padding" Value="14,6" />
@@ -198,6 +199,7 @@
                       SelectionMode="Single"
                       RowHeaderWidth="0"
                       CanUserAddRows="False"
+                      AlternationCount="100000"
                       Style="{StaticResource DataGridStyle}"
                       ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                       CellStyle="{StaticResource DataGridCellStyle}">
@@ -211,6 +213,9 @@
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="#EFF6FF" />
                             </Trigger>
+                            <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                <Setter Property="Background" Value="#FFFDE7" />
+                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
@@ -221,7 +226,7 @@
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="☐" Width="42">
+                    <DataGridTemplateColumn Header="" Width="42">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <CheckBox IsChecked="{Binding IsSelected,
@@ -230,8 +235,22 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="#" Binding="{Binding Id}"
-                                        Width="48" IsReadOnly="True" />
+                    <DataGridTextColumn Header="#" Width="48" IsReadOnly="True">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="(ItemsControl.AlternationIndex)"
+                                     RelativeSource="{RelativeSource AncestorType=DataGridRow}"
+                                     Converter="{StaticResource IndexConverter}" />
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="文件名" Binding="{Binding SourceName}"
+                                        Width="120" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
                     <DataGridTextColumn Header="类型" Width="60"
                                         Binding="{Binding DataType,
                                         Converter={StaticResource DataTypeConverter}}"

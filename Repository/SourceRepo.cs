@@ -14,7 +14,7 @@ public class SourceRepo : IBaseRepo<SourceData>
         using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
         conn.Open();
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, DataType, Content, IsMarked FROM SourceData";
+        cmd.CommandText = "SELECT Id, DataType, Content, SourceName, IsMarked FROM SourceData";
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
@@ -23,7 +23,8 @@ public class SourceRepo : IBaseRepo<SourceData>
                 Id = reader.GetInt32(0),
                 DataType = reader.GetInt32(1),
                 Content = reader.GetString(2),
-                IsMarked = reader.GetInt32(3) == 1
+                SourceName = reader.GetString(3),
+                IsMarked = reader.GetInt32(4) == 1
             });
         }
         return list;
@@ -34,7 +35,7 @@ public class SourceRepo : IBaseRepo<SourceData>
         using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
         conn.Open();
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, DataType, Content, IsMarked FROM SourceData WHERE Id = @Id";
+        cmd.CommandText = "SELECT Id, DataType, Content, SourceName, IsMarked FROM SourceData WHERE Id = @Id";
         cmd.Parameters.AddWithValue("@Id", id);
         using var reader = cmd.ExecuteReader();
         if (reader.Read())
@@ -44,7 +45,8 @@ public class SourceRepo : IBaseRepo<SourceData>
                 Id = reader.GetInt32(0),
                 DataType = reader.GetInt32(1),
                 Content = reader.GetString(2),
-                IsMarked = reader.GetInt32(3) == 1
+                SourceName = reader.GetString(3),
+                IsMarked = reader.GetInt32(4) == 1
             };
         }
         return null;
@@ -55,9 +57,10 @@ public class SourceRepo : IBaseRepo<SourceData>
         using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
         conn.Open();
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT INTO SourceData (DataType, Content, IsMarked) VALUES (@DataType, @Content, @IsMarked); SELECT last_insert_rowid();";
+        cmd.CommandText = "INSERT INTO SourceData (DataType, Content, SourceName, IsMarked) VALUES (@DataType, @Content, @SourceName, @IsMarked); SELECT last_insert_rowid();";
         cmd.Parameters.AddWithValue("@DataType", entity.DataType);
         cmd.Parameters.AddWithValue("@Content", entity.Content);
+        cmd.Parameters.AddWithValue("@SourceName", entity.SourceName ?? "");
         cmd.Parameters.AddWithValue("@IsMarked", entity.IsMarked ? 1 : 0);
         return Convert.ToInt32((long)cmd.ExecuteScalar()!);
     }
@@ -67,10 +70,11 @@ public class SourceRepo : IBaseRepo<SourceData>
         using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
         conn.Open();
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE SourceData SET DataType = @DataType, Content = @Content, IsMarked = @IsMarked WHERE Id = @Id";
+        cmd.CommandText = "UPDATE SourceData SET DataType = @DataType, Content = @Content, SourceName = @SourceName, IsMarked = @IsMarked WHERE Id = @Id";
         cmd.Parameters.AddWithValue("@Id", entity.Id);
         cmd.Parameters.AddWithValue("@DataType", entity.DataType);
         cmd.Parameters.AddWithValue("@Content", entity.Content);
+        cmd.Parameters.AddWithValue("@SourceName", entity.SourceName ?? "");
         cmd.Parameters.AddWithValue("@IsMarked", entity.IsMarked ? 1 : 0);
         cmd.ExecuteNonQuery();
     }
@@ -91,7 +95,7 @@ public class SourceRepo : IBaseRepo<SourceData>
         using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
         conn.Open();
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, DataType, Content, IsMarked FROM SourceData WHERE IsMarked = 0";
+        cmd.CommandText = "SELECT Id, DataType, Content, SourceName, IsMarked FROM SourceData WHERE IsMarked = 0";
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
@@ -100,7 +104,8 @@ public class SourceRepo : IBaseRepo<SourceData>
                 Id = reader.GetInt32(0),
                 DataType = reader.GetInt32(1),
                 Content = reader.GetString(2),
-                IsMarked = reader.GetInt32(3) == 1
+                SourceName = reader.GetString(3),
+                IsMarked = reader.GetInt32(4) == 1
             });
         }
         return list;

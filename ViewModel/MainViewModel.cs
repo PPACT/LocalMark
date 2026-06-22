@@ -117,17 +117,51 @@ public partial class MainViewModel : ObservableObject
         };
         if (dlg.ShowDialog() != true) return;
 
-        foreach (var filePath in dlg.FileNames)
+        var existing = _sourceRepo.GetAll().Where(s => s.DataType == 0).ToList();
+        var fileContents = dlg.FileNames
+            .Select(p => new { Path = p, Content = FileHelper.ReadTextFile(p) })
+            .ToList();
+
+        var dups = fileContents
+            .Where(f => existing.Any(e => e.Content == f.Content))
+            .Select(f => Path.GetFileName(f.Path)!)
+            .ToList();
+
+        var news = fileContents
+            .Where(f => !existing.Any(e => e.Content == f.Content))
+            .ToList();
+
+        var action = dups.Count > 0 ? ShowDuplicateDialog(dups) : DuplicateAction.Skip;
+
+        if (action == DuplicateAction.Cancel) return;
+
+        if (action == DuplicateAction.Overwrite)
         {
-            var content = FileHelper.ReadTextFile(filePath);
+            foreach (var fc in fileContents.Where(f => existing.Any(e => e.Content == f.Content)))
+            {
+                var dup = existing.First(e => e.Content == fc.Content);
+                var mark = _markRepo.GetBySourceId(dup.Id);
+                if (mark != null) _markRepo.Delete(mark.Id);
+                _sourceRepo.Delete(dup.Id);
+                // 移除已删除的引用，防止后续重复匹配
+                existing.Remove(dup);
+            }
+            // 将覆盖的文件也加入待导入列表
+            news.AddRange(fileContents.Where(f =>
+                !news.Any(n => n.Path == f.Path) &&
+                dups.Contains(Path.GetFileName(f.Path))));
+        }
+
+        foreach (var fc in news)
+        {
             _sourceRepo.Insert(new SourceData
             {
-                DataType = 0,
-                Content = content,
-                IsMarked = false
+                DataType = 0, Content = fc.Content, SourceName = Path.GetFileName(fc.Path),
+                IsMarked = false, IsHighlighted = true
             });
         }
-        RefreshSources();
+
+        RefreshSourcesAndFlash();
     }
 
     [RelayCommand]
@@ -140,16 +174,65 @@ public partial class MainViewModel : ObservableObject
         };
         if (dlg.ShowDialog() != true) return;
 
-        foreach (var filePath in dlg.FileNames)
+        var existing = _sourceRepo.GetAll().Where(s => s.DataType == 1).ToList();
+        var dups = dlg.FileNames
+            .Where(f => existing.Any(e => e.Content == f))
+            .Select(f => Path.GetFileName(f)!)
+            .ToList();
+
+        var newPaths = dlg.FileNames
+            .Where(f => !existing.Any(e => e.Content == f))
+            .ToList();
+
+        var action = dups.Count > 0 ? ShowDuplicateDialog(dups) : DuplicateAction.Skip;
+
+        if (action == DuplicateAction.Cancel) return;
+
+        if (action == DuplicateAction.Overwrite)
+        {
+            foreach (var path in dlg.FileNames.Where(f => existing.Any(e => e.Content == f)))
+            {
+                var dup = existing.First(e => e.Content == path);
+                var mark = _markRepo.GetBySourceId(dup.Id);
+                if (mark != null) _markRepo.Delete(mark.Id);
+                _sourceRepo.Delete(dup.Id);
+                existing.Remove(dup);
+            }
+            newPaths.AddRange(dlg.FileNames.Where(f =>
+                !newPaths.Contains(f) && dups.Contains(Path.GetFileName(f))));
+        }
+
+        foreach (var path in newPaths)
         {
             _sourceRepo.Insert(new SourceData
             {
-                DataType = 1,
-                Content = filePath,
-                IsMarked = false
+                DataType = 1, Content = path,
+                SourceName = Path.GetFileName(path),
+                IsMarked = false, IsHighlighted = true
             });
         }
+
+        RefreshSourcesAndFlash();
+    }
+
+    private static DuplicateAction ShowDuplicateDialog(List<string> dupNames)
+    {
+        var dlg = new DuplicateDialog(dupNames);
+        dlg.ShowDialog();
+        return dlg.Result;
+    }
+
+    private void RefreshSourcesAndFlash()
+    {
         RefreshSources();
+        if (Sources.Count == 0) return;
+        _ = Task.Delay(2200).ContinueWith(_ =>
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                foreach (var s in Sources) s.IsHighlighted = false;
+            });
+        });
     }
 
     [RelayCommand]

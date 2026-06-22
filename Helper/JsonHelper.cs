@@ -25,6 +25,7 @@ public static class JsonHelper
         var records = list.Select(s => new TextRecord
         {
             Id = s.Id,
+            SourceName = s.SourceName,
             Content = s.Content,
             Label = markDict.TryGetValue(s.Id, out var m) ? m.LabelName : null
         }).ToList();
@@ -68,6 +69,7 @@ public static class JsonHelper
             return new ImageRecord
             {
                 Id = s.Id,
+                SourceName = s.SourceName,
                 ImagePath = s.Content,
                 Label = m?.LabelName,
                 BoxPosition = ParseBox(m?.BoxPosition)
@@ -107,6 +109,7 @@ public static class JsonHelper
     private class TextRecord
     {
         public int Id { get; set; }
+        public string SourceName { get; set; } = "";
         public string Content { get; set; } = "";
         public string? Label { get; set; }
     }
@@ -114,6 +117,7 @@ public static class JsonHelper
     private class ImageRecord
     {
         public int Id { get; set; }
+        public string SourceName { get; set; } = "";
         public string ImagePath { get; set; } = "";
         public string? Label { get; set; }
         public object? BoxPosition { get; set; }
