@@ -14,10 +14,15 @@ public class OllamaAgent
     private readonly HttpClient _http;
     private readonly string _model;
 
-    public OllamaAgent(string host = "http://localhost:11434", string model = "qwen2.5vl:7b")
+    public OllamaAgent()
     {
-        _http = new HttpClient { BaseAddress = new Uri(host), Timeout = TimeSpan.FromMinutes(3) };
-        _model = model;
+        var settings = SettingsManager.Load();
+        _http = new HttpClient
+        {
+            BaseAddress = new Uri(settings.Ollama.Host),
+            Timeout = TimeSpan.FromMinutes(3)
+        };
+        _model = settings.Ollama.Model;
     }
 
     public async Task<List<DetectedObject>> AnnotateImageAsync(

@@ -3,58 +3,260 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:LocalMark.ViewModel"
         xmlns:cvt="clr-namespace:LocalMark.Converters"
-        Title="LocalMark 本地数据标注工具" Height="550" Width="900"
-        WindowStartupLocation="CenterScreen">
+        Title="LocalMark 本地数据标注工具" Height="580" Width="960"
+        MinHeight="420" MinWidth="720"
+        WindowStartupLocation="CenterScreen"
+        Background="#F8F9FB">
     <Window.Resources>
         <cvt:DataTypeConverter x:Key="DataTypeConverter" />
+        <cvt:MarkedStatusConverter x:Key="MarkedStatusConverter" />
+        <Style TargetType="Button">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style x:Key="ToolBtn" TargetType="Button">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="MinWidth" Value="88" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D0D5DD" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}"
+                                Name="bd">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#F0F3F8" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E4E8F0" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="AccentBtn" TargetType="Button" BasedOn="{StaticResource ToolBtn}">
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="BorderBrush" Value="#2563EB" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1D4ED8" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="AiBtn" TargetType="Button" BasedOn="{StaticResource ToolBtn}">
+            <Setter Property="Background" Value="#FFF7ED" />
+            <Setter Property="BorderBrush" Value="#FDBA74" />
+            <Setter Property="Foreground" Value="#C2410C" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFEDD5" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SettingsBtn" TargetType="Button" BasedOn="{StaticResource ToolBtn}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="#777" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="MinWidth" Value="36" />
+        </Style>
+        <Style x:Key="DataGridStyle" TargetType="DataGrid">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#E0E3E8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#F0F1F3" />
+            <Setter Property="RowHeight" Value="36" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="ColumnHeaderHeight" Value="36" />
+        </Style>
+        <Style x:Key="DataGridColumnHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F8F9FB" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderBrush" Value="#E0E3E8" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+        <Style x:Key="DataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        </Style>
     </Window.Resources>
+
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
-    <Grid Margin="10">
+
+    <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- 顶栏 -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E0E3E8"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="LocalMark" FontSize="18" FontWeight="Bold"
+                               Foreground="#1E293B" VerticalAlignment="Center" />
+                    <TextBlock Text="本地数据标注工具" FontSize="13"
+                               Foreground="#94A3B8" VerticalAlignment="Center"
+                               Margin="10,0,0,0" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="⚙" Command="{Binding OpenSettingsCommand}"
+                        Style="{StaticResource SettingsBtn}" ToolTip="系统设置" />
+            </Grid>
+        </Border>
+
         <!-- 工具栏 -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-            <Button Content="导入文本素材" Command="{Binding ImportTextFileCommand}"
-                    Width="110" Margin="0,0,5,0" />
-            <Button Content="导入图片素材" Command="{Binding ImportImageFilesCommand}"
-                    Width="110" Margin="0,0,15,0" />
-            <Separator Width="2" Margin="0,2" />
-            <Button Content="标注" Command="{Binding OpenMarkViewCommand}"
-                    Width="60" Margin="15,0,15,0" FontWeight="Bold" />
-            <Separator Width="2" Margin="0,2" />
-            <Button Content="导出 JSON" Command="{Binding ExportToJsonCommand}"
-                    Width="110" Margin="15,0,0,0" />
-        </StackPanel>
+        <Border Grid.Row="1" Background="White" BorderBrush="#E0E3E8"
+                BorderThickness="0,0,0,1" Padding="16,10">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="📄 导入文本" Command="{Binding ImportTextFileCommand}"
+                        Style="{StaticResource ToolBtn}" />
+                <Button Content="🖼 导入图片" Command="{Binding ImportImageFilesCommand}"
+                        Style="{StaticResource ToolBtn}" Margin="8,0,0,0" />
+                <Separator Width="1" Margin="14,4" Background="#E0E3E8" />
+                <Button Content="✏️ 手动标注" Command="{Binding OpenMarkViewCommand}"
+                        Style="{StaticResource AccentBtn}" />
+                <Separator Width="1" Margin="14,4" Background="#E0E3E8" />
+                <Button Content="🤖 批量 AI 标注" Command="{Binding BatchAiMarkCommand}"
+                        Style="{StaticResource AiBtn}" />
+                <Separator Width="1" Margin="14,4" Background="#E0E3E8" />
+                <Button Content="📦 导出 JSON" Command="{Binding ExportToJsonCommand}"
+                        Style="{StaticResource ToolBtn}" />
+                <Separator Width="1" Margin="14,4" Background="#E0E3E8" />
+                <Button x:Name="ClearBtn" Content="🗑 清除 ▾"
+                        Style="{StaticResource ToolBtn}" Click="ClearBtn_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="清除已标注"
+                                      Command="{Binding ClearMarkedCommand}" />
+                            <MenuItem Header="清除未标注"
+                                      Command="{Binding ClearUnmarkedCommand}" />
+                            <Separator />
+                            <MenuItem Header="清除所有"
+                                      Command="{Binding ClearAllCommand}" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+            </StackPanel>
+        </Border>
 
-        <!-- 筛选栏 -->
-        <CheckBox Grid.Row="1" Content="仅显示未标注"
-                  IsChecked="{Binding ShowUnmarkedOnly}" Margin="0,0,0,8" />
+        <!-- 内容区 -->
+        <Grid Grid.Row="2" Margin="16,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- 素材列表 -->
-        <DataGrid Grid.Row="2" ItemsSource="{Binding Sources}"
-                  SelectedItem="{Binding SelectedSource}"
-                  AutoGenerateColumns="False" IsReadOnly="True"
-                  SelectionMode="Single">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50" />
-                <DataGridTextColumn Header="类型" Width="60"
-                                    Binding="{Binding DataType,
-                                    Converter={StaticResource DataTypeConverter}}" />
-                <DataGridTextColumn Header="内容" Binding="{Binding Content}" Width="*">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridCheckBoxColumn Header="已标注" Binding="{Binding IsMarked}" Width="65" />
-            </DataGrid.Columns>
-        </DataGrid>
+            <!-- 筛选栏 -->
+            <Border Grid.Row="0" Margin="0,12,0,10">
+                <StackPanel Orientation="Horizontal">
+                    <CheckBox Content="仅显示未标注" IsChecked="{Binding ShowUnmarkedOnly}"
+                              Foreground="#555" FontSize="13" VerticalAlignment="Center" />
+                    <Separator Width="1" Margin="16,2" Background="#E0E3E8" />
+                    <CheckBox Content="全选"
+                              IsChecked="{Binding IsAllSelected}"
+                              Foreground="#555" FontSize="13" VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- 素材列表 -->
+            <DataGrid Grid.Row="1" ItemsSource="{Binding Sources}"
+                      SelectedItem="{Binding SelectedSource}"
+                      AutoGenerateColumns="False"
+                      SelectionMode="Single"
+                      RowHeaderWidth="0"
+                      CanUserAddRows="False"
+                      Style="{StaticResource DataGridStyle}"
+                      ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
+                      CellStyle="{StaticResource DataGridCellStyle}">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="White" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F6F8FC" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#EFF6FF" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Resources>
+                    <Style x:Key="ChkBoxStyle" TargetType="CheckBox">
+                        <Setter Property="HorizontalAlignment" Value="Center" />
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="☐" Width="42">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsSelected,
+                                          UpdateSourceTrigger=PropertyChanged}"
+                                          Style="{StaticResource ChkBoxStyle}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="#" Binding="{Binding Id}"
+                                        Width="48" IsReadOnly="True" />
+                    <DataGridTextColumn Header="类型" Width="60"
+                                        Binding="{Binding DataType,
+                                        Converter={StaticResource DataTypeConverter}}"
+                                        IsReadOnly="True" />
+                    <DataGridTextColumn Header="素材内容" Binding="{Binding Content}"
+                                        Width="*" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="状态" Width="70" IsReadOnly="True"
+                                        Binding="{Binding IsMarked,
+                                        Converter={StaticResource MarkedStatusConverter}}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
     </Grid>
 </Window>
