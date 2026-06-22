@@ -1,0 +1,59 @@
+<Window x:Class="LocalMark.View.DuplicateDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="重复文件" Height="340" Width="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Background="#FAFBFC">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock FontSize="15" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,6">
+                以下文件已存在，如何处理？
+            </TextBlock>
+            <TextBlock FontSize="12" Foreground="#94A3B8" TextWrapping="Wrap">
+                覆盖将删除原有记录并重新导入；跳过则仅导入新文件。
+            </TextBlock>
+        </StackPanel>
+
+        <Border Grid.Row="1" Background="White" CornerRadius="6"
+                BorderBrush="#E0E3E8" BorderThickness="1" Padding="8">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="FileList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" FontSize="12"
+                                       Foreground="#C2410C" Margin="4,2"
+                                       TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button x:Name="CancelBtn" Content="取消" Width="80" Margin="0,0,8,0"
+                    Click="CancelBtn_Click"
+                    Background="#F1F5F9" Foreground="#555"
+                    BorderBrush="#D0D5DD" BorderThickness="1"
+                    FontSize="13" Padding="12,6" Cursor="Hand" />
+            <Button x:Name="SkipBtn" Content="跳过" Width="80" Margin="0,0,8,0"
+                    Click="SkipBtn_Click"
+                    Background="#F1F5F9" Foreground="#555"
+                    BorderBrush="#D0D5DD" BorderThickness="1"
+                    FontSize="13" Padding="12,6" Cursor="Hand" />
+            <Button x:Name="OverwriteBtn" Content="覆盖" Width="80"
+                    Click="OverwriteBtn_Click"
+                    Background="#2563EB" Foreground="White"
+                    BorderBrush="Transparent" BorderThickness="1"
+                    FontSize="13" FontWeight="SemiBold" Padding="12,6" Cursor="Hand" />
+        </StackPanel>
+    </Grid>
+</Window>

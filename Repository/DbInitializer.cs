@@ -3,9 +3,6 @@ using Microsoft.Data.Sqlite;
 
 namespace LocalMark.Repository;
 
-/// <summary>
-/// 数据库初始化：启动时判断 .db 是否存在，不存在则建库建表
-/// </summary>
 public static class DbInitializer
 {
     public const string DbPath = "localmark.db";
@@ -14,13 +11,14 @@ public static class DbInitializer
 
     public static void Initialize()
     {
-        // 判断数据库文件是否存在
         bool dbExists = File.Exists(DbPath);
 
         if (!dbExists)
         {
             CreateTables();
         }
+
+        Migrate();
     }
 
     public static string GetConnectionString() => ConnectionString;
@@ -36,6 +34,7 @@ public static class DbInitializer
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 DataType INTEGER NOT NULL,
                 Content NVARCHAR NOT NULL,
+                SourceName NVARCHAR DEFAULT '',
                 IsMarked INTEGER DEFAULT 0
             );
 
@@ -48,5 +47,18 @@ public static class DbInitializer
             );
         ";
         cmd.ExecuteNonQuery();
+    }
+
+    private static void Migrate()
+    {
+        using var conn = new SqliteConnection(ConnectionString);
+        conn.Open();
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE SourceData ADD COLUMN SourceName NVARCHAR DEFAULT ''";
+            cmd.ExecuteNonQuery();
+        }
+        catch { }
     }
 }

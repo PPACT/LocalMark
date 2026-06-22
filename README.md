@@ -7,25 +7,29 @@
 - **.NET 8 + WPF** — 桌面客户端
 - **SQLite** — 本地数据库，零配置
 - **CommunityToolkit.Mvvm** — MVVM 架构
-- **MVVM 分层** — Model / View / ViewModel / Repository / Helper
 
 ## 功能
 
 - 导入文本素材（.txt）和图片素材
 - 文本分类标注：读取标签配置，选择分类标签
 - 图片框标注：Canvas 拖拽绘制矩形框，坐标自动保存为 JSON
-- 标注数据导出为 JSON 格式
-- 支持未标注/已标注筛选
+- 标注数据导出为 JSON（文本/图片分文件，含统计报告）
+- 未标注/已标注筛选 + 全选
+- 重复文件导入检测
+- 现代化 UI（圆角卡片、行悬停、高亮提示）
 
 ## 运行
 
 ```bash
+# 开发启动
+launch.bat
+
+# 或直接
 dotnet run
+
+# 打包为独立 exe（无需 .NET 运行时）
+publish.bat
 ```
-
-## 项目状态
-
-v1.0 基础版已完成，编译 0 错误 0 警告，可直接运行。
 
 ## 目录结构
 

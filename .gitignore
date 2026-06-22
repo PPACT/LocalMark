@@ -1,9 +1,13 @@
 # .NET Build
 bin/
 obj/
+publish/
 
 # SQLite Database
 *.db
+
+# Secrets
+Config/appsettings.json
 
 # IDE
 .vs/
