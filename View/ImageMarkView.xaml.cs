@@ -28,13 +28,41 @@ public partial class ImageMarkView : Window
     }
 
     private List<DetectedObject>? _aiResults;
+    private int _currentIndex;
 
     private void OnAiMarkCompleted(List<DetectedObject> results)
     {
         if (results.Count == 0) return;
 
         _aiResults = results;
-        ApplyDetection(0);
+        _currentIndex = 0;
+        ApplyDetection(_currentIndex);
+        UpdateNavButtons();
+    }
+
+    private void PrevDetection_Click(object sender, RoutedEventArgs e)
+    {
+        if (_aiResults == null || _currentIndex <= 0) return;
+        _currentIndex--;
+        ApplyDetection(_currentIndex);
+        UpdateNavButtons();
+    }
+
+    private void NextDetection_Click(object sender, RoutedEventArgs e)
+    {
+        if (_aiResults == null || _currentIndex >= _aiResults.Count - 1) return;
+        _currentIndex++;
+        ApplyDetection(_currentIndex);
+        UpdateNavButtons();
+    }
+
+    private void UpdateNavButtons()
+    {
+        var count = _aiResults?.Count ?? 0;
+        PrevBtn.IsEnabled = count > 1 && _currentIndex > 0;
+        NextBtn.IsEnabled = count > 1 && _currentIndex < count - 1;
+        NavLabel.Text = count > 1 ? $"{_currentIndex + 1}/{count}" : "";
+        NavPanel.Visibility = count > 1 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void ApplyDetection(int index)

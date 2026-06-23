@@ -14,7 +14,7 @@ public class MarkRepo : IBaseRepo<MarkResult>
         using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
         conn.Open();
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, SourceId, LabelName, BoxPosition FROM MarkResult";
+        cmd.CommandText = "SELECT Id, SourceId, LabelName, BoxPosition, MarkedAt FROM MarkResult";
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
@@ -44,7 +44,8 @@ public class MarkRepo : IBaseRepo<MarkResult>
                 Id = reader.GetInt32(0),
                 SourceId = reader.GetInt32(1),
                 LabelName = reader.GetString(2),
-                BoxPosition = reader.IsDBNull(3) ? null : reader.GetString(3)
+                BoxPosition = reader.IsDBNull(3) ? null : reader.GetString(3),
+                MarkedAt = reader.IsDBNull(4) ? null : reader.GetDateTime(4)
             };
         }
         return null;
@@ -55,11 +56,12 @@ public class MarkRepo : IBaseRepo<MarkResult>
         using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
         conn.Open();
         var cmd = conn.CreateCommand();
-        cmd.CommandText = @"INSERT INTO MarkResult (SourceId, LabelName, BoxPosition)
-                            VALUES (@SourceId, @LabelName, @BoxPosition); SELECT last_insert_rowid();";
+        cmd.CommandText = @"INSERT INTO MarkResult (SourceId, LabelName, BoxPosition, MarkedAt)
+                            VALUES (@SourceId, @LabelName, @BoxPosition, @MarkedAt); SELECT last_insert_rowid();";
         cmd.Parameters.AddWithValue("@SourceId", entity.SourceId);
         cmd.Parameters.AddWithValue("@LabelName", entity.LabelName);
         cmd.Parameters.AddWithValue("@BoxPosition", (object?)entity.BoxPosition ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@MarkedAt", (object?)entity.MarkedAt ?? DBNull.Value);
         return Convert.ToInt32((long)cmd.ExecuteScalar()!);
     }
 
@@ -69,11 +71,12 @@ public class MarkRepo : IBaseRepo<MarkResult>
         conn.Open();
         var cmd = conn.CreateCommand();
         cmd.CommandText = @"UPDATE MarkResult SET SourceId = @SourceId, LabelName = @LabelName,
-                            BoxPosition = @BoxPosition WHERE Id = @Id";
+                            BoxPosition = @BoxPosition, MarkedAt = @MarkedAt WHERE Id = @Id";
         cmd.Parameters.AddWithValue("@Id", entity.Id);
         cmd.Parameters.AddWithValue("@SourceId", entity.SourceId);
         cmd.Parameters.AddWithValue("@LabelName", entity.LabelName);
         cmd.Parameters.AddWithValue("@BoxPosition", (object?)entity.BoxPosition ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@MarkedAt", (object?)entity.MarkedAt ?? DBNull.Value);
         cmd.ExecuteNonQuery();
     }
 
@@ -102,7 +105,8 @@ public class MarkRepo : IBaseRepo<MarkResult>
                 Id = reader.GetInt32(0),
                 SourceId = reader.GetInt32(1),
                 LabelName = reader.GetString(2),
-                BoxPosition = reader.IsDBNull(3) ? null : reader.GetString(3)
+                BoxPosition = reader.IsDBNull(3) ? null : reader.GetString(3),
+                MarkedAt = reader.IsDBNull(4) ? null : reader.GetDateTime(4)
             };
         }
         return null;

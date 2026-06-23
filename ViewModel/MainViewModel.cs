@@ -41,6 +41,10 @@ public partial class MainViewModel : ObservableObject
     private static readonly string ConfigPath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "Config", "LabelConfig.xml");
 
+    [ObservableProperty] private int _selectedTabIndex;
+    [ObservableProperty] private BatchAiMarkViewModel? _batchVm;
+    [ObservableProperty] private bool _isBatching;
+
     public MainViewModel()
     {
         RefreshSources();
@@ -63,15 +67,8 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ClearMarked()
     {
-        var ids = Sources.Where(s => s.IsMarked).Select(s => s.Id).ToList();
-        if (ids.Count == 0) return;
-        foreach (var id in ids)
-        {
-            var mark = _markRepo.GetBySourceId(id);
-            if (mark != null) _markRepo.Delete(mark.Id);
-            _sourceRepo.Delete(id);
-        }
-        RefreshSources();
+        // 隐藏已标注 → 仅显示未标注（不删数据）
+        ShowUnmarkedOnly = true;
     }
 
     [RelayCommand]
@@ -86,15 +83,10 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ClearAll()
     {
-        if (Sources.Count == 0) return;
-        foreach (var s in Sources)
-        {
-            var mark = _markRepo.GetBySourceId(s.Id);
-            if (mark != null) _markRepo.Delete(mark.Id);
-            _sourceRepo.Delete(s.Id);
-        }
-        ResetSequences();
-        RefreshSources();
+        // 已标注的保留在后台（新界面可见），未标注的从 DB 删除
+        var unmarkedIds = Sources.Where(s => !s.IsMarked).Select(s => s.Id).ToList();
+        foreach (var id in unmarkedIds) _sourceRepo.Delete(id);
+        ShowUnmarkedOnly = true;
     }
 
     private static void ResetSequences()
@@ -215,6 +207,73 @@ public partial class MainViewModel : ObservableObject
         RefreshSourcesAndFlash();
     }
 
+    [RelayCommand]
+    private void ImportFolder()
+    {
+        var dlg = new OpenFolderDialog { Title = "选择素材文件夹" };
+        if (dlg.ShowDialog() != true) return;
+
+        var textFiles = FileHelper.GetTextFiles(dlg.FolderName);
+        var imageFiles = FileHelper.GetImageFiles(dlg.FolderName);
+
+        if (textFiles.Length == 0 && imageFiles.Length == 0)
+        {
+            System.Windows.MessageBox.Show("所选文件夹内没有支持的文件。", "提示");
+            return;
+        }
+
+        var totalImported = 0;
+        if (textFiles.Length > 0)
+            totalImported += ImportFilesInternal(textFiles, 0, f => FileHelper.ReadTextFile(f));
+        if (imageFiles.Length > 0)
+            totalImported += ImportFilesInternal(imageFiles, 1, f => f);
+
+        if (totalImported > 0)
+            RefreshSourcesAndFlash();
+    }
+
+    private int ImportFilesInternal(string[] files, int dataType,
+        Func<string, string> readContent)
+    {
+        var existing = _sourceRepo.GetAll().Where(s => s.DataType == dataType).ToList();
+        var items = files.Select(f => new { Path = f, Content = readContent(f) }).ToList();
+
+        var dups = items
+            .Where(x => existing.Any(e => e.Content == x.Content))
+            .Select(x => Path.GetFileName(x.Path)!)
+            .ToList();
+        var news = items
+            .Where(x => !existing.Any(e => e.Content == x.Content))
+            .ToList();
+
+        var action = dups.Count > 0 ? ShowDuplicateDialog(dups) : DuplicateAction.Skip;
+        if (action == DuplicateAction.Cancel) return 0;
+
+        if (action == DuplicateAction.Overwrite)
+        {
+            foreach (var x in items.Where(x => existing.Any(e => e.Content == x.Content)))
+            {
+                var dup = existing.First(e => e.Content == x.Content);
+                var mark = _markRepo.GetBySourceId(dup.Id);
+                if (mark != null) _markRepo.Delete(mark.Id);
+                _sourceRepo.Delete(dup.Id);
+                existing.Remove(dup);
+            }
+            news.AddRange(items.Where(x =>
+                !news.Any(n => n.Path == x.Path) && dups.Contains(Path.GetFileName(x.Path)!)));
+        }
+
+        foreach (var x in news)
+            _sourceRepo.Insert(new SourceData
+            {
+                DataType = dataType, Content = x.Content,
+                SourceName = Path.GetFileName(x.Path),
+                IsMarked = false, IsHighlighted = true
+            });
+
+        return news.Count;
+    }
+
     private static DuplicateAction ShowDuplicateDialog(List<string> dupNames)
     {
         var dlg = new DuplicateDialog(dupNames);
@@ -302,6 +361,41 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void CloseBatchPanel()
+    {
+        BatchVm?.CancelCommand.Execute(null);
+        BatchVm = null;
+        IsBatching = false;
+    }
+
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value == 1) RefreshResults();
+    }
+
+    [ObservableProperty]
+    private ObservableCollection<object> _results = [];
+
+    private void RefreshResults()
+    {
+        var sources = _sourceRepo.GetAll().ToList();
+        var marks = _markRepo.GetAll().ToList();
+        Results = new ObservableCollection<object>(
+            sources.Where(s => s.IsMarked).Select(s =>
+            {
+                var m = marks.FirstOrDefault(x => x.SourceId == s.Id);
+                return (object)new
+                {
+                    FileName = s.SourceName,
+                    Type = s.DataType == 0 ? "文本" : "图片",
+                    Label = m?.LabelName ?? "—",
+                    MarkedAt = m?.MarkedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—",
+                    Content = s.DataType == 0 ? s.Content : s.SourceName
+                };
+            }));
+    }
+
+    [RelayCommand]
     private void OpenSettings()
     {
         var vm = new SettingsViewModel();
@@ -324,17 +418,12 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        var vm = new BatchAiMarkViewModel(selected);
-        vm.BatchCompleted += () =>
+        BatchVm = new BatchAiMarkViewModel(selected);
+        BatchVm.BatchCompleted += () =>
         {
+            IsBatching = false;
             RefreshSources();
         };
-
-        var window = new BatchAiMarkView
-        {
-            DataContext = vm,
-            Owner = System.Windows.Application.Current.MainWindow
-        };
-        window.ShowDialog();
+        IsBatching = true;
     }
 }

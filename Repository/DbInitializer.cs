@@ -36,7 +36,15 @@ public static class DbInitializer
             cmd.CommandText = "ALTER TABLE SourceData ADD COLUMN SourceName NVARCHAR DEFAULT ''";
             cmd.ExecuteNonQuery();
         }
-        catch { /* 列已存在则忽略 */ }
+        catch { }
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE MarkResult ADD COLUMN MarkedAt DATETIME";
+            cmd.ExecuteNonQuery();
+        }
+        catch { }
     }
 
     public static string GetConnectionString() => ConnectionString;
@@ -61,6 +69,7 @@ public static class DbInitializer
                 SourceId INTEGER NOT NULL,
                 LabelName NVARCHAR NOT NULL,
                 BoxPosition NVARCHAR,
+                MarkedAt DATETIME,
                 FOREIGN KEY (SourceId) REFERENCES SourceData(Id)
             );
         ";

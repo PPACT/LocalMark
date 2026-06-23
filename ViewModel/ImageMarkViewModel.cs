@@ -118,6 +118,7 @@ public partial class ImageMarkViewModel : ObservableObject
         {
             existing.LabelName = SelectedLabel.Name;
             existing.BoxPosition = boxJson;
+            existing.MarkedAt = DateTime.Now;
             _markRepo.Update(existing);
         }
         else
@@ -126,7 +127,8 @@ public partial class ImageMarkViewModel : ObservableObject
             {
                 SourceId = Source.Id,
                 LabelName = SelectedLabel.Name,
-                BoxPosition = boxJson
+                BoxPosition = boxJson,
+                MarkedAt = DateTime.Now
             });
         }
 

@@ -59,6 +59,7 @@ public partial class TextMarkViewModel : ObservableObject
         if (existing != null)
         {
             existing.LabelName = SelectedLabel.Name;
+            existing.MarkedAt = DateTime.Now;
             _markRepo.Update(existing);
         }
         else
@@ -66,7 +67,8 @@ public partial class TextMarkViewModel : ObservableObject
             _markRepo.Insert(new MarkResult
             {
                 SourceId = Source.Id,
-                LabelName = SelectedLabel.Name
+                LabelName = SelectedLabel.Name,
+                MarkedAt = DateTime.Now
             });
         }
 

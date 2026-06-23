@@ -176,7 +176,7 @@
             <Button Content="关闭" Command="{Binding CloseWindowCommand}"
                     Style="{StaticResource BtnBase}"
                     Background="#F1F5F9" Foreground="#555" BorderBrush="#D0D5DD"
-                    IsEnabled="{Binding IsCompleted}" />
+                    IsEnabled="{Binding IsRunning, Converter={StaticResource BoolInvert}}" />
         </StackPanel>
     </Grid>
 </Window>

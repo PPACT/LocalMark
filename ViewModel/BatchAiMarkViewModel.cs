@@ -45,6 +45,16 @@ public partial class BatchAiMarkViewModel : ObservableObject
         Sources = sources;
         _textLabels = XmlHelper.LoadTextLabels(ConfigPath);
         _imageLabels = XmlHelper.LoadImageLabels(ConfigPath);
+
+        // 打开即显示任务列表
+        Results = new ObservableCollection<BatchResult>(
+            Sources.Select((s, i) => new BatchResult
+            {
+                Index = i + 1,
+                DataType = s.DataType == 0 ? "文本" : "图片",
+                Content = s.Content,
+                Status = "等待处理"
+            }));
     }
 
     [RelayCommand]
@@ -60,22 +70,14 @@ public partial class BatchAiMarkViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsRunning = true;
         IsCompleted = false;
-        Results.Clear();
-        ProgressValue = 0;
-        DisplayProgressValue = 0;
 
         var total = Sources.Count;
-        var processed = 0;
+        var alreadyDone = Results.Count(r =>
+            r.Status is "成功" or "失败" or "跳过" or "无检出");
+        var processed = alreadyDone;
 
-        // 预填全部待处理项，让用户提前看到任务列表
-        Results = new ObservableCollection<BatchResult>(
-            Sources.Select((s, i) => new BatchResult
-            {
-                Index = i + 1,
-                DataType = s.DataType == 0 ? "文本" : "图片",
-                Content = s.Content,
-                Status = "等待处理"
-            }));
+        ProgressValue = (int)(processed * 100.0 / total);
+        DisplayProgressValue = ProgressValue;
 
         // 启动假进度动画
         var animCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
@@ -87,6 +89,10 @@ public partial class BatchAiMarkViewModel : ObservableObject
 
             var source = Sources[i];
             var result = Results[i];
+
+            // 跳过已完成项
+            if (result.Status is "成功" or "失败" or "跳过" or "无检出")
+                continue;
 
             CurrentItem = source.DataType == 0
                 ? $"[文本] {Truncate(source.Content, 40)}"
@@ -119,14 +125,18 @@ public partial class BatchAiMarkViewModel : ObservableObject
         animCts.Cancel();
         try { await animTask; } catch (OperationCanceledException) { }
 
-        DisplayProgressValue = 100;
+        var cancelled = _cts.IsCancellationRequested;
+        if (!cancelled)
+            DisplayProgressValue = 100;
+
         IsRunning = false;
-        IsCompleted = true;
-        StatusText = _cts.IsCancellationRequested
+        IsCompleted = !cancelled;
+        StatusText = cancelled
             ? $"已取消 ({processed}/{total})"
             : $"完成 ({processed}/{total})";
 
-        BatchCompleted?.Invoke();
+        if (!cancelled)
+            BatchCompleted?.Invoke();
     }
 
     private async Task AnimateProgressAsync(CancellationToken ct, int total)
@@ -193,6 +203,7 @@ public partial class BatchAiMarkViewModel : ObservableObject
         {
             existing.LabelName = label;
             existing.BoxPosition = boxJson;
+            existing.MarkedAt = DateTime.Now;
             _markRepo.Update(existing);
         }
         else
@@ -201,7 +212,8 @@ public partial class BatchAiMarkViewModel : ObservableObject
             {
                 SourceId = source.Id,
                 LabelName = label,
-                BoxPosition = boxJson
+                BoxPosition = boxJson,
+                MarkedAt = DateTime.Now
             });
         }
 

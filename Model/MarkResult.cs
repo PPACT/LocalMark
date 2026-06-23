@@ -9,4 +9,5 @@ public class MarkResult
     public int SourceId { get; set; }
     public string LabelName { get; set; } = string.Empty;
     public string? BoxPosition { get; set; }
+    public DateTime? MarkedAt { get; set; }
 }

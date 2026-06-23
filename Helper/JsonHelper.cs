@@ -22,12 +22,15 @@ public static class JsonHelper
         var list = sources.Where(s => s.DataType == 0).ToList();
         var markDict = marks.ToDictionary(m => m.SourceId);
 
+        MarkResult? GetMark(int id) => markDict.TryGetValue(id, out var m) ? m : null;
+
         var records = list.Select(s => new TextRecord
         {
             Id = s.Id,
             SourceName = s.SourceName,
             Content = s.Content,
-            Label = markDict.TryGetValue(s.Id, out var m) ? m.LabelName : null
+            Label = GetMark(s.Id)?.LabelName,
+            MarkedAt = GetMark(s.Id)?.MarkedAt
         }).ToList();
 
         var distribution = records
@@ -72,7 +75,8 @@ public static class JsonHelper
                 SourceName = s.SourceName,
                 ImagePath = s.Content,
                 Label = m?.LabelName,
-                BoxPosition = ParseBox(m?.BoxPosition)
+                BoxPosition = ParseBox(m?.BoxPosition),
+                MarkedAt = m?.MarkedAt
             };
         }).ToList();
 
@@ -112,6 +116,7 @@ public static class JsonHelper
         public string SourceName { get; set; } = "";
         public string Content { get; set; } = "";
         public string? Label { get; set; }
+        public DateTime? MarkedAt { get; set; }
     }
 
     private class ImageRecord
@@ -121,5 +126,6 @@ public static class JsonHelper
         public string ImagePath { get; set; } = "";
         public string? Label { get; set; }
         public object? BoxPosition { get; set; }
+        public DateTime? MarkedAt { get; set; }
     }
 }
