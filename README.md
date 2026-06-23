@@ -53,7 +53,7 @@ LocalMark/
 ├── View/          视图层 (XAML)
 ├── ViewModel/     视图模型层 (MVVM)
 ├── Repository/    数据仓储层 (SQLite CRUD)
-├── Helper/        工具类 + AI Agent
-├── Config/        配置文件 (XML 标签 + JSON 设置)
+├── Helper/        工具类
+├── Config/        配置文件 (XML 标签)
 └── Converters/    值转换器
 ```
