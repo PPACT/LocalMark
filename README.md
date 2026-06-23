@@ -57,3 +57,5 @@ LocalMark/
 ├── Config/        配置文件 (XML 标签)
 └── Converters/    值转换器
 ```
+
+> feature 分支更新 — 2026-06-23
