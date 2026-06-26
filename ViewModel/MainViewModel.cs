@@ -305,32 +305,47 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenMarkView()
+    private async Task OpenMarkViewAsync()
     {
-        if (SelectedSource == null) return;
-
-        Window window = SelectedSource.DataType switch
+        var queue = Sources.Where(s => s.IsSelected).ToList();
+        if (queue.Count == 0)
         {
-            0 => new TextMarkView(),
-            1 => new ImageMarkView(),
-            _ => throw new InvalidOperationException("Unknown data type")
-        };
-
-        if (SelectedSource.DataType == 0)
-        {
-            var vm = new TextMarkViewModel(SelectedSource);
-            vm.MarkSaved += _ => RefreshSources();
-            window.DataContext = vm;
-        }
-        else
-        {
-            var vm = new ImageMarkViewModel(SelectedSource);
-            vm.MarkSaved += _ => RefreshSources();
-            window.DataContext = vm;
+            if (SelectedSource != null)
+                queue.Add(SelectedSource);
+            else
+                return;
         }
 
-        window.Owner = System.Windows.Application.Current.MainWindow;
-        window.ShowDialog();
+        for (int i = 0; i < queue.Count; i++)
+        {
+            var source = queue[i];
+            var remaining = queue.Count - i;
+
+            Window window = source.DataType switch
+            {
+                0 => new TextMarkView(),
+                1 => new ImageMarkView(),
+                _ => throw new InvalidOperationException("Unknown data type")
+            };
+
+            if (source.DataType == 0)
+            {
+                var vm = new TextMarkViewModel(source);
+                vm.MarkSaved += _ => RefreshSources();
+                window.DataContext = vm;
+            }
+            else
+            {
+                var vm = new ImageMarkViewModel(source);
+                vm.MarkSaved += _ => RefreshSources();
+                window.DataContext = vm;
+            }
+
+            if (remaining > 1) window.Title += $" ({i + 1}/{queue.Count})";
+
+            window.Owner = Application.Current.MainWindow;
+            window.ShowDialog();
+        }
     }
 
     [RelayCommand]

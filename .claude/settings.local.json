@@ -20,7 +20,9 @@
       "Bash(ssh-keygen *)",
       "Bash(dotnet add *)",
       "Bash(git reset *)",
-      "Bash(dotnet run *)"
+      "Bash(dotnet run *)",
+      "Bash(dotnet clean *)",
+      "Bash(rm -rf obj bin)"
     ]
   }
 }
