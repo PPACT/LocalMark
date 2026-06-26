@@ -333,17 +333,20 @@ public partial class MainViewModel : ObservableObject
                 return;
         }
 
-        for (int i = 0; i < queue.Count; i++)
+        var aborted = false;
+        for (int i = 0; i < queue.Count && !aborted; i++)
         {
             var source = queue[i];
             var remaining = queue.Count - i;
 
             Window window = source.DataType switch
             {
-                0 => new TextMarkView(),
-                1 => new ImageMarkView(),
+                0 => new TextMarkView { Title = "文本标注" },
+                1 => new ImageMarkView { Title = "图片标注" },
                 _ => throw new InvalidOperationException("Unknown data type")
             };
+
+            if (remaining > 1) window.Title += $" ({i + 1}/{queue.Count})";
 
             if (source.DataType == 0)
             {
@@ -358,7 +361,18 @@ public partial class MainViewModel : ObservableObject
                 window.DataContext = vm;
             }
 
-            if (remaining > 1) window.Title += $" ({i + 1}/{queue.Count})";
+            window.Closing += (_, e) =>
+            {
+                if (source.IsMarked) return;
+                if (remaining <= 1) return;
+                var r = MessageBox.Show(
+                    $"还有 {remaining - 1} 个未标注，是否退出？\n（已标注的会保留，未标注的保持原状）",
+                    "退出标注", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (r == MessageBoxResult.Yes)
+                    aborted = true;
+                else
+                    e.Cancel = true;
+            };
 
             window.Owner = Application.Current.MainWindow;
             window.ShowDialog();
