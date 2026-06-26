@@ -17,6 +17,34 @@ public partial class ImageMarkView : Window
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        PreviewKeyDown += OnKeyDown;
+    }
+
+    private void OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter
+            && DataContext is ImageMarkViewModel vm)
+        {
+            if (vm.SaveCommand.CanExecute(null))
+                vm.SaveCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Escape
+                 && DataContext is ImageMarkViewModel vm2)
+        {
+            vm2.CloseWindowCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Left && _aiResults is { Count: > 1 })
+        {
+            PrevDetection_Click(sender, e);
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Right && _aiResults is { Count: > 1 })
+        {
+            NextDetection_Click(sender, e);
+            e.Handled = true;
+        }
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -150,6 +178,10 @@ public partial class ImageMarkView : Window
         MarkRect.Visibility = Visibility.Collapsed;
         MarkRect.Width = 0;
         MarkRect.Height = 0;
+
+        _aiResults = null;
+        _currentIndex = 0;
+        NavPanel.Visibility = Visibility.Collapsed;
 
         if (DataContext is ImageMarkViewModel vm)
         {

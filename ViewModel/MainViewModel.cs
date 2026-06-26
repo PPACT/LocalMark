@@ -13,8 +13,8 @@ namespace LocalMark.ViewModel;
 
 public partial class MainViewModel : ObservableObject
 {
-    private readonly SourceRepo _sourceRepo = new();
-    private readonly MarkRepo _markRepo = new();
+    private readonly SourceRepo _sourceRepo;
+    private readonly MarkRepo _markRepo;
 
     [ObservableProperty]
     private ObservableCollection<SourceData> _sources = [];
@@ -24,6 +24,9 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showUnmarkedOnly;
+
+    [ObservableProperty]
+    private string _searchText = "";
 
     private bool _isAllSelected;
     public bool IsAllSelected
@@ -45,20 +48,27 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private BatchAiMarkViewModel? _batchVm;
     [ObservableProperty] private bool _isBatching;
 
-    public MainViewModel()
+    public MainViewModel(SourceRepo sourceRepo, MarkRepo markRepo)
     {
+        _sourceRepo = sourceRepo;
+        _markRepo = markRepo;
         RefreshSources();
     }
 
-    partial void OnShowUnmarkedOnlyChanged(bool value)
-    {
-        RefreshSources();
-    }
+    partial void OnShowUnmarkedOnlyChanged(bool value) => RefreshSources();
+    partial void OnSearchTextChanged(string value) => RefreshSources();
 
     [RelayCommand]
     private void RefreshSources()
     {
         var items = ShowUnmarkedOnly ? _sourceRepo.GetUnmarked() : _sourceRepo.GetAll();
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            var kw = SearchText.Trim();
+            items = items.Where(s =>
+                s.SourceName.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                || s.Content.Contains(kw, StringComparison.OrdinalIgnoreCase));
+        }
         Sources = new ObservableCollection<SourceData>(items);
         _isAllSelected = false;
         OnPropertyChanged(nameof(IsAllSelected));

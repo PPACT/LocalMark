@@ -10,13 +10,18 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+    <PackageReference Include="Dapper" Version="2.*" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.*" />
+    <PackageReference Include="Prism.Core" Version="9.*" />
+    <PackageReference Include="Prism.DryIoc" Version="9.*" />
+    <PackageReference Include="Prism.Wpf" Version="9.*" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Config\LabelConfig.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Resource Include="Resources\**\*.xaml" />
   </ItemGroup>
 
 </Project>

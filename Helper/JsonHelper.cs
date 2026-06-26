@@ -16,7 +16,7 @@ public static class JsonHelper
         IEnumerable<SourceData> sources, IEnumerable<MarkResult> marks,
         string outputDir, string? dateSuffix = null)
     {
-        var date = dateSuffix ?? DateTime.Now.ToString("yyyyMMdd");
+        var date = dateSuffix ?? DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var path = Path.Combine(outputDir, $"文本标注_{date}.json");
 
         var list = sources.Where(s => s.DataType == 0).ToList();
@@ -60,7 +60,7 @@ public static class JsonHelper
         IEnumerable<SourceData> sources, IEnumerable<MarkResult> marks,
         string outputDir, string? dateSuffix = null)
     {
-        var date = dateSuffix ?? DateTime.Now.ToString("yyyyMMdd");
+        var date = dateSuffix ?? DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var path = Path.Combine(outputDir, $"图片标注_{date}.json");
 
         var list = sources.Where(s => s.DataType == 1).ToList();

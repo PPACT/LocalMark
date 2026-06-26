@@ -11,6 +11,7 @@
         <cvt:DataTypeConverter x:Key="DataTypeConverter" />
         <cvt:MarkedStatusConverter x:Key="MarkedStatusConverter" />
         <cvt:IndexPlusOneConverter x:Key="IndexConverter" />
+        <cvt:ThumbnailConverter x:Key="ThumbnailConverter" />
         <cvt:BoolInvertConverter x:Key="BoolInvert" />
         <cvt:BoolToVisibilityConverter x:Key="BoolToVis" />
         <Style TargetType="Button">
@@ -257,6 +258,14 @@
                             <CheckBox Content="全选" IsChecked="{Binding IsAllSelected}"
                                       Foreground="#555" FontSize="13"
                                       VerticalAlignment="Center" />
+                            <Separator Width="1" Margin="16,2" Background="#E0E3E8" />
+                            <TextBlock Text="🔍" FontSize="13" VerticalAlignment="Center"
+                                       Margin="0,0,4,0" Foreground="#94A3B8" />
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="180" FontSize="13" Padding="6,4"
+                                     BorderBrush="#D0D5DD" Background="#FAFBFC"
+                                     VerticalAlignment="Center"
+                                     ToolTip="搜索文件名或内容" />
                         </StackPanel>
                     </Border>
 
@@ -324,6 +333,17 @@
                                                 Binding="{Binding DataType,
                                                 Converter={StaticResource DataTypeConverter}}"
                                                 IsReadOnly="True" />
+                            <DataGridTemplateColumn Header="预览" Width="54">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding Content,
+                                               Converter={StaticResource ThumbnailConverter}}"
+                                               Width="36" Height="28"
+                                               Stretch="UniformToFill"
+                                               HorizontalAlignment="Center" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="素材内容" Binding="{Binding Content}"
                                                 Width="*" IsReadOnly="True">
                                 <DataGridTextColumn.ElementStyle>
