@@ -99,6 +99,23 @@ public partial class MainViewModel : ObservableObject
         ShowUnmarkedOnly = true;
     }
 
+    [RelayCommand]
+    private void DeleteAllResults()
+    {
+        var markedIds = _sourceRepo.GetAll()
+            .Where(s => s.IsMarked).Select(s => s.Id).ToList();
+        if (markedIds.Count == 0) return;
+
+        foreach (var id in markedIds)
+        {
+            var mark = _markRepo.GetBySourceId(id);
+            if (mark != null) _markRepo.Delete(mark.Id);
+            _sourceRepo.Delete(id);
+        }
+        RefreshSources();
+        RefreshResults();
+    }
+
     private static void ResetSequences()
     {
         using var conn = new Microsoft.Data.Sqlite.SqliteConnection(
