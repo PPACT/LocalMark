@@ -45,21 +45,16 @@
                 Padding="12,10" Margin="0,0,0,10"
                 BorderBrush="#E8ECF2" BorderThickness="1">
             <StackPanel Orientation="Horizontal">
-                <Label Content="标注标签" VerticalAlignment="Center"
-                       FontSize="13" Foreground="#555" />
-                <ComboBox ItemsSource="{Binding Labels}"
-                          SelectedItem="{Binding SelectedLabel}"
-                          DisplayMemberPath="Name"
-                          MinWidth="160" FontSize="13"
+                <Label Content="标注标签" VerticalAlignment="Center" FontSize="13" Foreground="#555" />
+                <ComboBox ItemsSource="{Binding Labels}" SelectedItem="{Binding SelectedLabel}"
+                          DisplayMemberPath="Name" MinWidth="160" FontSize="13"
                           VerticalAlignment="Center" Margin="10,0,0,0" />
-                <TextBlock Text="（拖拽鼠标绘制标注框）"
-                           Foreground="#94A3B8" FontSize="12"
+                <TextBlock Text="（拖拽鼠标绘制标注框）" Foreground="#94A3B8" FontSize="12"
                            VerticalAlignment="Center" Margin="20,0,0,0" />
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="1" Background="White"
-                BorderBrush="#E0E3E8" BorderThickness="1"
+        <Border Grid.Row="1" Background="White" BorderBrush="#E0E3E8" BorderThickness="1"
                 CornerRadius="6" ClipToBounds="True">
             <Grid>
                 <Image x:Name="ImgDisplay"
@@ -70,10 +65,8 @@
                         MouseMove="Canvas_MouseMove"
                         MouseLeftButtonUp="Canvas_MouseLeftButtonUp"
                         Background="Transparent">
-                    <Rectangle x:Name="MarkRect"
-                               Stroke="#EF4444" StrokeThickness="2.5"
-                               Fill="Transparent" RadiusX="2" RadiusY="2"
-                               Visibility="Collapsed" />
+                    <Rectangle x:Name="MarkRect" Stroke="#EF4444" StrokeThickness="2.5"
+                               Fill="Transparent" RadiusX="2" RadiusY="2" Visibility="Collapsed" />
                 </Canvas>
             </Grid>
         </Border>
@@ -82,17 +75,15 @@
                     HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="清除标注" Click="ClearBox_Click"
                     Style="{StaticResource BtnBase}"
-                    Background="#F1F5F9" Foreground="#555"
-                    BorderBrush="#D0D5DD" />
+                    Background="#F1F5F9" Foreground="#555" BorderBrush="#D0D5DD" />
             <Button Content="保存" Command="{Binding SaveCommand}"
                     Style="{StaticResource BtnBase}"
-                    Background="#2563EB" Foreground="White"
-                    BorderBrush="Transparent" FontWeight="SemiBold"
-                    Margin="10,0,0,0" />
+                    Background="#2563EB" Foreground="White" BorderBrush="Transparent"
+                    FontWeight="SemiBold" Margin="10,0,0,0" />
             <Button Content="取消" Command="{Binding CloseWindowCommand}"
                     Style="{StaticResource BtnBase}"
-                    Background="#F1F5F9" Foreground="#555"
-                    BorderBrush="#D0D5DD" Margin="10,0,0,0" />
+                    Background="#F1F5F9" Foreground="#555" BorderBrush="#D0D5DD"
+                    Margin="10,0,0,0" />
         </StackPanel>
     </Grid>
 </Window>

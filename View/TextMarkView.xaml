@@ -18,8 +18,10 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6" Padding="{TemplateBinding Padding}" Name="bd">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                CornerRadius="6" Padding="{TemplateBinding Padding}"
+                                Name="bd">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -39,6 +41,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- 标签选择 -->
         <Border Grid.Row="0" Background="White" CornerRadius="6"
                 Padding="12,10" Margin="0,0,0,10"
                 BorderBrush="#E8ECF2" BorderThickness="1">
@@ -49,19 +52,25 @@
                           SelectedItem="{Binding SelectedLabel}"
                           DisplayMemberPath="Name"
                           MinWidth="160" FontSize="13"
-                          VerticalAlignment="Center" Margin="10,0,0,0" />
+                          VerticalAlignment="Center"
+                          Margin="10,0,0,0" />
             </StackPanel>
         </Border>
 
+        <!-- 文本内容 -->
         <Border Grid.Row="1" Background="White" CornerRadius="6"
-                BorderBrush="#E0E3E8" BorderThickness="1" Padding="12">
+                BorderBrush="#E0E3E8" BorderThickness="1"
+                Padding="12">
             <TextBox Text="{Binding SourceContent}"
                      TextWrapping="Wrap" IsReadOnly="True"
                      VerticalScrollBarVisibility="Auto"
-                     FontSize="14" BorderThickness="0"
-                     Background="Transparent" Foreground="#334155" />
+                     FontSize="14"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     Foreground="#334155" />
         </Border>
 
+        <!-- 按钮 -->
         <StackPanel Grid.Row="2" Orientation="Horizontal"
                     HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="保存" Command="{Binding SaveCommand}"

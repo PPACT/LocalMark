@@ -3,6 +3,9 @@ using Microsoft.Data.Sqlite;
 
 namespace LocalMark.Repository;
 
+/// <summary>
+/// 数据库初始化：启动时判断 .db 是否存在，不存在则建库建表
+/// </summary>
 public static class DbInitializer
 {
     public const string DbPath = "localmark.db";
@@ -11,6 +14,7 @@ public static class DbInitializer
 
     public static void Initialize()
     {
+        // 判断数据库文件是否存在
         bool dbExists = File.Exists(DbPath);
 
         if (!dbExists)
@@ -19,6 +23,28 @@ public static class DbInitializer
         }
 
         Migrate();
+    }
+
+    private static void Migrate()
+    {
+        using var conn = new SqliteConnection(ConnectionString);
+        conn.Open();
+        // 为旧数据库补充 SourceName 列
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE SourceData ADD COLUMN SourceName NVARCHAR DEFAULT ''";
+            cmd.ExecuteNonQuery();
+        }
+        catch { }
+
+        try
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE MarkResult ADD COLUMN MarkedAt DATETIME";
+            cmd.ExecuteNonQuery();
+        }
+        catch { }
     }
 
     public static string GetConnectionString() => ConnectionString;
@@ -43,22 +69,10 @@ public static class DbInitializer
                 SourceId INTEGER NOT NULL,
                 LabelName NVARCHAR NOT NULL,
                 BoxPosition NVARCHAR,
+                MarkedAt DATETIME,
                 FOREIGN KEY (SourceId) REFERENCES SourceData(Id)
             );
         ";
         cmd.ExecuteNonQuery();
-    }
-
-    private static void Migrate()
-    {
-        using var conn = new SqliteConnection(ConnectionString);
-        conn.Open();
-        try
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "ALTER TABLE SourceData ADD COLUMN SourceName NVARCHAR DEFAULT ''";
-            cmd.ExecuteNonQuery();
-        }
-        catch { }
     }
 }

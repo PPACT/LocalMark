@@ -1,110 +1,47 @@
+using Dapper;
 using Microsoft.Data.Sqlite;
 using LocalMark.Model;
 
 namespace LocalMark.Repository;
 
-/// <summary>
-/// 标注结果仓储
-/// </summary>
 public class MarkRepo : IBaseRepo<MarkResult>
 {
+    private static SqliteConnection GetConn() => new(DbInitializer.GetConnectionString());
+
     public IEnumerable<MarkResult> GetAll()
     {
-        var list = new List<MarkResult>();
-        using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, SourceId, LabelName, BoxPosition FROM MarkResult";
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
-        {
-            list.Add(new MarkResult
-            {
-                Id = reader.GetInt32(0),
-                SourceId = reader.GetInt32(1),
-                LabelName = reader.GetString(2),
-                BoxPosition = reader.IsDBNull(3) ? null : reader.GetString(3)
-            });
-        }
-        return list;
+        using var conn = GetConn();
+        return conn.Query<MarkResult>("SELECT Id, SourceId, LabelName, BoxPosition, MarkedAt FROM MarkResult");
     }
 
     public MarkResult? GetById(int id)
     {
-        using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, SourceId, LabelName, BoxPosition FROM MarkResult WHERE Id = @Id";
-        cmd.Parameters.AddWithValue("@Id", id);
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
-        {
-            return new MarkResult
-            {
-                Id = reader.GetInt32(0),
-                SourceId = reader.GetInt32(1),
-                LabelName = reader.GetString(2),
-                BoxPosition = reader.IsDBNull(3) ? null : reader.GetString(3)
-            };
-        }
-        return null;
-    }
-
-    public int Insert(MarkResult entity)
-    {
-        using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = @"INSERT INTO MarkResult (SourceId, LabelName, BoxPosition)
-                            VALUES (@SourceId, @LabelName, @BoxPosition); SELECT last_insert_rowid();";
-        cmd.Parameters.AddWithValue("@SourceId", entity.SourceId);
-        cmd.Parameters.AddWithValue("@LabelName", entity.LabelName);
-        cmd.Parameters.AddWithValue("@BoxPosition", (object?)entity.BoxPosition ?? DBNull.Value);
-        return Convert.ToInt32((long)cmd.ExecuteScalar()!);
-    }
-
-    public void Update(MarkResult entity)
-    {
-        using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = @"UPDATE MarkResult SET SourceId = @SourceId, LabelName = @LabelName,
-                            BoxPosition = @BoxPosition WHERE Id = @Id";
-        cmd.Parameters.AddWithValue("@Id", entity.Id);
-        cmd.Parameters.AddWithValue("@SourceId", entity.SourceId);
-        cmd.Parameters.AddWithValue("@LabelName", entity.LabelName);
-        cmd.Parameters.AddWithValue("@BoxPosition", (object?)entity.BoxPosition ?? DBNull.Value);
-        cmd.ExecuteNonQuery();
-    }
-
-    public void Delete(int id)
-    {
-        using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM MarkResult WHERE Id = @Id";
-        cmd.Parameters.AddWithValue("@Id", id);
-        cmd.ExecuteNonQuery();
+        using var conn = GetConn();
+        return conn.QueryFirstOrDefault<MarkResult>("SELECT Id, SourceId, LabelName, BoxPosition, MarkedAt FROM MarkResult WHERE Id = @Id", new { Id = id });
     }
 
     public MarkResult? GetBySourceId(int sourceId)
     {
-        using var conn = new SqliteConnection(DbInitializer.GetConnectionString());
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, SourceId, LabelName, BoxPosition FROM MarkResult WHERE SourceId = @SourceId";
-        cmd.Parameters.AddWithValue("@SourceId", sourceId);
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
-        {
-            return new MarkResult
-            {
-                Id = reader.GetInt32(0),
-                SourceId = reader.GetInt32(1),
-                LabelName = reader.GetString(2),
-                BoxPosition = reader.IsDBNull(3) ? null : reader.GetString(3)
-            };
-        }
-        return null;
+        using var conn = GetConn();
+        return conn.QueryFirstOrDefault<MarkResult>("SELECT Id, SourceId, LabelName, BoxPosition, MarkedAt FROM MarkResult WHERE SourceId = @SourceId", new { SourceId = sourceId });
+    }
+
+    public int Insert(MarkResult entity)
+    {
+        using var conn = GetConn();
+        return conn.ExecuteScalar<int>(
+            "INSERT INTO MarkResult (SourceId, LabelName, BoxPosition, MarkedAt) VALUES (@SourceId, @LabelName, @BoxPosition, @MarkedAt); SELECT last_insert_rowid();", entity);
+    }
+
+    public void Update(MarkResult entity)
+    {
+        using var conn = GetConn();
+        conn.Execute("UPDATE MarkResult SET SourceId=@SourceId, LabelName=@LabelName, BoxPosition=@BoxPosition, MarkedAt=@MarkedAt WHERE Id=@Id", entity);
+    }
+
+    public void Delete(int id)
+    {
+        using var conn = GetConn();
+        conn.Execute("DELETE FROM MarkResult WHERE Id = @Id", new { Id = id });
     }
 }

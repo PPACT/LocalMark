@@ -14,44 +14,50 @@ public partial class ImageMarkView : Window
     public ImageMarkView()
     {
         InitializeComponent();
+        PreviewKeyDown += OnKeyDown;
+    }
+
+    private void OnKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && DataContext is ImageMarkViewModel vm)
+        {
+            if (vm.SaveCommand.CanExecute(null)) vm.SaveCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && DataContext is ImageMarkViewModel vm2)
+        {
+            vm2.CloseWindowCommand.Execute(null);
+            e.Handled = true;
+        }
     }
 
     private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         _isDrawing = true;
         _startPoint = e.GetPosition(MarkCanvas);
-
         Canvas.SetLeft(MarkRect, _startPoint.X);
         Canvas.SetTop(MarkRect, _startPoint.Y);
-        MarkRect.Width = 0;
-        MarkRect.Height = 0;
+        MarkRect.Width = 0; MarkRect.Height = 0;
         MarkRect.Visibility = Visibility.Visible;
-
         MarkCanvas.CaptureMouse();
     }
 
     private void Canvas_MouseMove(object sender, MouseEventArgs e)
     {
         if (!_isDrawing) return;
-
         var pos = e.GetPosition(MarkCanvas);
         var x = System.Math.Min(pos.X, _startPoint.X);
         var y = System.Math.Min(pos.Y, _startPoint.Y);
-        var w = System.Math.Abs(pos.X - _startPoint.X);
-        var h = System.Math.Abs(pos.Y - _startPoint.Y);
-
         Canvas.SetLeft(MarkRect, x);
         Canvas.SetTop(MarkRect, y);
-        MarkRect.Width = w;
-        MarkRect.Height = h;
+        MarkRect.Width = System.Math.Abs(pos.X - _startPoint.X);
+        MarkRect.Height = System.Math.Abs(pos.Y - _startPoint.Y);
     }
 
     private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         _isDrawing = false;
         MarkCanvas.ReleaseMouseCapture();
-
-        // 同步到 ViewModel
         if (DataContext is ImageMarkViewModel vm)
         {
             vm.BoxX = Canvas.GetLeft(MarkRect);
@@ -64,15 +70,8 @@ public partial class ImageMarkView : Window
     private void ClearBox_Click(object sender, RoutedEventArgs e)
     {
         MarkRect.Visibility = Visibility.Collapsed;
-        MarkRect.Width = 0;
-        MarkRect.Height = 0;
-
+        MarkRect.Width = 0; MarkRect.Height = 0;
         if (DataContext is ImageMarkViewModel vm)
-        {
-            vm.BoxX = 0;
-            vm.BoxY = 0;
-            vm.BoxWidth = 0;
-            vm.BoxHeight = 0;
-        }
+        { vm.BoxX = 0; vm.BoxY = 0; vm.BoxWidth = 0; vm.BoxHeight = 0; }
     }
 }

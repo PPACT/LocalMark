@@ -3,6 +3,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace LocalMark.Model;
 
+/// <summary>
+/// 素材实体
+/// </summary>
 public partial class SourceData : ObservableObject
 {
     public int Id { get; set; }

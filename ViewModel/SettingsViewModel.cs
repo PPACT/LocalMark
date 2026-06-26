@@ -19,8 +19,7 @@ public partial class SettingsViewModel : ObservableObject
     private void BrowseOutputDir()
     {
         var dlg = new OpenFolderDialog { Title = "选择标注结果存放目录" };
-        if (dlg.ShowDialog() == true)
-            OutputDir = dlg.FolderName;
+        if (dlg.ShowDialog() == true) OutputDir = dlg.FolderName;
     }
 
     [RelayCommand]
@@ -35,7 +34,6 @@ public partial class SettingsViewModel : ObservableObject
     {
         System.Windows.Application.Current.Windows
             .OfType<System.Windows.Window>()
-            .FirstOrDefault(w => w.DataContext == this)?
-            .Close();
+            .FirstOrDefault(w => w.DataContext == this)?.Close();
     }
 }
