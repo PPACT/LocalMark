@@ -21,7 +21,6 @@
     <None Update="Config\LabelConfig.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Resource Include="Resources\**\*.xaml" />
   </ItemGroup>
 
 </Project>

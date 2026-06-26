@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf \"D:\\\\Code\\\\Test\\\\LocalMark_original\")",
+      "Bash(git clone *)",
+      "Bash(grep -E \"^[^.]|\\\\.cs$|\\\\.xaml$|\\\\.xml$|\\\\.json$\")",
+      "Bash(dotnet publish *)",
+      "Bash(dotnet build *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git checkout *)",
+      "Bash(git commit *)",
+      "Bash(rm -f \"D:\\\\Code\\\\Test\\\\LocalMark\\\\publish\\\\LocalMark.exe\")",
+      "Bash(rm -f \"D:\\\\Code\\\\Test\\\\LocalMark\\\\localmark.db\")",
+      "Bash(ping -n 1 github.com)",
+      "Bash(curl -I https://github.com --connect-timeout 5)",
+      "Bash(GIT_SSL_NO_VERIFY=true git push origin main)",
+      "Read(//c/Users/YZM/.ssh/**)",
+      "Bash(ssh-keygen *)",
+      "Bash(dotnet add *)",
+      "Bash(git reset *)",
+      "Bash(dotnet run *)"
+    ]
+  }
+}
