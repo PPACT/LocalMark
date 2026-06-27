@@ -188,9 +188,9 @@ public partial class BatchAiMarkViewModel : ObservableObject
         result.ResultLabel = best.Label;
         result.Status = $"成功 ({detections.Count}个目标)";
 
-        var boxJson = System.Text.Json.JsonSerializer.Serialize(new
+        var boxJson = System.Text.Json.JsonSerializer.Serialize(new[]
         {
-            X = best.X, Y = best.Y, Width = best.Width, Height = best.Height
+            new { x = best.X, y = best.Y, w = best.Width, h = best.Height, label = best.Label }
         });
 
         SaveMark(source, best.Label, boxJson);

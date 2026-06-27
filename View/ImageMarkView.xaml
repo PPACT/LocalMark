@@ -99,28 +99,9 @@
                        Visibility="{Binding IsAiRunning, Converter={StaticResource BoolToVis}}"
                        Foreground="#EA580C" FontSize="12"
                        VerticalAlignment="Center" Margin="10,0,0,0" />
-            <Border x:Name="NavPanel" Visibility="Collapsed"
-                    Background="#F0F4FF" CornerRadius="6"
-                    BorderBrush="#BFDBFE" BorderThickness="1"
-                    Padding="6,4" Margin="16,0,0,0">
-                <StackPanel Orientation="Horizontal">
-                    <Button x:Name="PrevBtn" Content="◀ 上一框"
-                            Style="{StaticResource BtnBase}"
-                            Background="Transparent" Foreground="#2563EB"
-                            BorderBrush="Transparent" Padding="8,4"
-                            FontSize="12" MinWidth="60"
-                            Click="PrevDetection_Click" />
-                    <TextBlock x:Name="NavLabel" Text=""
-                               FontSize="12" Foreground="#2563EB"
-                               VerticalAlignment="Center" Margin="6,0" />
-                    <Button x:Name="NextBtn" Content="下一框 ▶"
-                            Style="{StaticResource BtnBase}"
-                            Background="Transparent" Foreground="#2563EB"
-                            BorderBrush="Transparent" Padding="8,4"
-                            FontSize="12" MinWidth="60"
-                            Click="NextDetection_Click" />
-                </StackPanel>
-            </Border>
+            <TextBlock Text="{Binding Boxes.Count, StringFormat=已标注 {0} 个框}"
+                       FontSize="12" Foreground="#2563EB"
+                       VerticalAlignment="Center" Margin="16,0,0,0" />
             <Button Content="清除标注" Click="ClearBox_Click"
                     Style="{StaticResource BtnBase}"
                     Background="#F1F5F9" Foreground="#555"

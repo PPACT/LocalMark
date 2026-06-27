@@ -29,22 +29,26 @@ public class YoloExporter : IExportService
             var (iw, ih) = GetImageSize(s.Content);
             if (iw == 0 || ih == 0) continue;
 
-            var box = ParseBox(m.BoxPosition);
-            if (box == null) continue;
+            var boxes = ParseBoxes(m.BoxPosition);
+            if (boxes.Count == 0) continue;
 
-            if (!catMap.TryGetValue(m.LabelName, out var catId))
+            var lines = new List<string>();
+            foreach (var box in boxes)
             {
-                catId = nextCatId++;
-                catMap[m.LabelName] = catId;
+                if (!catMap.TryGetValue(box.Label ?? m.LabelName, out var catId))
+                {
+                    catId = nextCatId++;
+                    catMap[box.Label ?? m.LabelName] = catId;
+                }
+                var cx = (box.X + box.Width / 2) / iw;
+                var cy = (box.Y + box.Height / 2) / ih;
+                var nw = box.Width / iw;
+                var nh = box.Height / ih;
+                lines.Add($"{catId} {cx:F6} {cy:F6} {nw:F6} {nh:F6}");
             }
 
-            var cx = (box.X + box.Width / 2) / iw;
-            var cy = (box.Y + box.Height / 2) / ih;
-            var nw = box.Width / iw;
-            var nh = box.Height / ih;
-
             var txtPath = Path.Combine(dir, Path.GetFileNameWithoutExtension(s.Content) + ".txt");
-            File.WriteAllText(txtPath, $"{catId} {cx:F6} {cy:F6} {nw:F6} {nh:F6}");
+            File.WriteAllText(txtPath, string.Join("\n", lines));
         }
 
         // classes.txt
@@ -67,11 +71,14 @@ public class YoloExporter : IExportService
         catch { return (0, 0); }
     }
 
-    private static Box? ParseBox(string j)
+    private static List<Box> ParseBoxes(string json)
     {
-        try { return JsonSerializer.Deserialize<Box>(j); }
-        catch { return null; }
+        try { var list = JsonSerializer.Deserialize<List<Box>>(json); if (list != null) return list; }
+        catch { }
+        try { var single = JsonSerializer.Deserialize<Box>(json); if (single != null) return [single]; }
+        catch { }
+        return [];
     }
 
-    private class Box { public double X { get; set; } public double Y { get; set; } public double Width { get; set; } public double Height { get; set; } }
+    private class Box { public double X { get; set; } public double Y { get; set; } public double Width { get; set; } public double Height { get; set; } public string? Label { get; set; } }
 }

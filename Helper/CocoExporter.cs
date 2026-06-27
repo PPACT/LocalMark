@@ -37,16 +37,18 @@ public class CocoExporter : IExportService
                 categories.Add(new { id = catId, name = m.LabelName });
             }
 
-            var box = ParseBox(m.BoxPosition);
-            if (box == null) { imgId++; continue; }
+            var boxes = ParseBoxes(m.BoxPosition);
+            if (boxes.Count == 0) { imgId++; continue; }
 
-            var (bx, by, bw, bh) = ClampBox(box.X, box.Y, box.Width, box.Height, w, h);
-
-            annotations.Add(new
+            foreach (var box in boxes)
             {
-                id = annoId++, image_id = imgId, category_id = catId,
-                bbox = new[] { bx, by, bw, bh }, area = bw * bh, iscrowd = 0
-            });
+                var (bx, by, bw, bh) = ClampBox(box.X, box.Y, box.Width, box.Height, w, h);
+                annotations.Add(new
+                {
+                    id = annoId++, image_id = imgId, category_id = catId,
+                    bbox = new[] { bx, by, bw, bh }, area = bw * bh, iscrowd = 0
+                });
+            }
 
             imgId++;
         }
@@ -70,10 +72,23 @@ public class CocoExporter : IExportService
         catch { return (0, 0); }
     }
 
-    private static Box? ParseBox(string json)
+    private static List<Box> ParseBoxes(string json)
     {
-        try { return JsonSerializer.Deserialize<Box>(json); }
-        catch { return null; }
+        try
+        {
+            // 新格式: 多框数组
+            var list = JsonSerializer.Deserialize<List<Box>>(json);
+            if (list != null) return list;
+        }
+        catch { }
+        try
+        {
+            // 兼容旧格式: 单框
+            var single = JsonSerializer.Deserialize<Box>(json);
+            if (single != null) return [single];
+        }
+        catch { }
+        return [];
     }
 
     private static (double x, double y, double w, double h) ClampBox(

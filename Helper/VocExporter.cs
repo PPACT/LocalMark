@@ -29,26 +29,30 @@ public class VocExporter : IExportService
             var (iw, ih) = GetImageSize(s.Content);
             if (iw == 0 || ih == 0) continue;
 
-            var box = ParseBox(m.BoxPosition);
-            if (box == null) continue;
+            var boxes = ParseBoxes(m.BoxPosition);
+            if (boxes.Count == 0) continue;
 
-            var xmin = (int)Math.Max(0, Math.Min(box.X, iw - 1));
-            var ymin = (int)Math.Max(0, Math.Min(box.Y, ih - 1));
-            var xmax = (int)Math.Max(1, Math.Min(box.X + box.Width, iw));
-            var ymax = (int)Math.Max(1, Math.Min(box.Y + box.Height, ih));
+            var xmlObjects = boxes.Select(box =>
+            {
+                var xmin = (int)Math.Max(0, Math.Min(box.X, iw - 1));
+                var ymin = (int)Math.Max(0, Math.Min(box.Y, ih - 1));
+                var xmax = (int)Math.Max(1, Math.Min(box.X + box.Width, iw));
+                var ymax = (int)Math.Max(1, Math.Min(box.Y + box.Height, ih));
+                return new XElement("object",
+                    new XElement("name", box.Label ?? m.LabelName),
+                    new XElement("bndbox",
+                        new XElement("xmin", xmin),
+                        new XElement("ymin", ymin),
+                        new XElement("xmax", xmax),
+                        new XElement("ymax", ymax)));
+            });
 
             var xml = new XElement("annotation",
                 new XElement("filename", Path.GetFileName(s.Content)),
                 new XElement("size",
                     new XElement("width", iw),
                     new XElement("height", ih)),
-                new XElement("object",
-                    new XElement("name", m.LabelName),
-                    new XElement("bndbox",
-                        new XElement("xmin", xmin),
-                        new XElement("ymin", ymin),
-                        new XElement("xmax", xmax),
-                        new XElement("ymax", ymax))));
+                xmlObjects);
 
             var path = Path.Combine(dir, Path.GetFileNameWithoutExtension(s.Content) + ".xml");
             File.WriteAllText(path, xml.ToString());
@@ -68,11 +72,14 @@ public class VocExporter : IExportService
         catch { return (0, 0); }
     }
 
-    private static Box? ParseBox(string j)
+    private static List<Box> ParseBoxes(string json)
     {
-        try { return JsonSerializer.Deserialize<Box>(j); }
-        catch { return null; }
+        try { var list = JsonSerializer.Deserialize<List<Box>>(json); if (list != null) return list; }
+        catch { }
+        try { var single = JsonSerializer.Deserialize<Box>(json); if (single != null) return [single]; }
+        catch { }
+        return [];
     }
 
-    private class Box { public double X { get; set; } public double Y { get; set; } public double Width { get; set; } public double Height { get; set; } }
+    private class Box { public double X { get; set; } public double Y { get; set; } public double Width { get; set; } public double Height { get; set; } public string? Label { get; set; } }
 }
