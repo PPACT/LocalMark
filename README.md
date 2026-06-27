@@ -1,4 +1,4 @@
-# LocalMark
+# LocalMark v2.0
 
 轻量化单机数据标注工具，支持手动标注 + AI 半自动标注。
 
