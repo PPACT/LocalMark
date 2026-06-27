@@ -77,6 +77,30 @@
                         MouseMove="Canvas_MouseMove"
                         MouseLeftButtonUp="Canvas_MouseLeftButtonUp"
                         Background="Transparent">
+                    <!-- 已标注框回显 -->
+                    <ItemsControl ItemsSource="{Binding Boxes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Canvas>
+                                    <Rectangle Width="{Binding Width}" Height="{Binding Height}"
+                                               Canvas.Left="{Binding X}" Canvas.Top="{Binding Y}"
+                                               Stroke="#2563EB" StrokeThickness="2"
+                                               Fill="#502563EB" RadiusX="2" RadiusY="2" />
+                                    <TextBlock Text="{Binding Label}"
+                                               Canvas.Left="{Binding X}" Canvas.Top="{Binding Y}"
+                                               Foreground="White" Background="#2563EB"
+                                               FontSize="11" Padding="3,1"
+                                               IsHitTestVisible="False" />
+                                </Canvas>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <!-- 正在绘制中的临时框 -->
                     <Rectangle x:Name="MarkRect"
                                Stroke="#EF4444" StrokeThickness="2.5"
                                Fill="Transparent"
