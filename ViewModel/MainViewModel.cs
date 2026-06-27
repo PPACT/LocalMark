@@ -392,28 +392,33 @@ public partial class MainViewModel : ObservableObject
 
         var sources = _sourceRepo.GetAll().ToList();
         var marks = _markRepo.GetAll().ToList();
-
-        var countText = sources.Count(s => s.DataType == 0);
-        var countImage = sources.Count(s => s.DataType == 1);
         var paths = new List<string>();
 
-        if (countText > 0)
-            paths.Add(JsonHelper.ExportTextResults(sources, marks, outputDir));
-        if (countImage > 0)
-            paths.Add(JsonHelper.ExportImageResults(sources, marks, outputDir));
+        switch (settings.ExportFormat)
+        {
+            case "COCO":
+                new CocoExporter().Export(sources, marks, outputDir);
+                paths.Add("coco_*.json");
+                break;
+            case "YOLO":
+                new YoloExporter().Export(sources, marks, outputDir);
+                paths.Add("yolo_*/");
+                break;
+            case "VOC":
+                new VocExporter().Export(sources, marks, outputDir);
+                paths.Add("voc_*/");
+                break;
+            default:
+                if (sources.Any(s => s.DataType == 0))
+                    paths.Add(JsonHelper.ExportTextResults(sources, marks, outputDir));
+                if (sources.Any(s => s.DataType == 1))
+                    paths.Add(JsonHelper.ExportImageResults(sources, marks, outputDir));
+                break;
+        }
 
-        if (paths.Count == 0)
-        {
-            System.Windows.MessageBox.Show("没有可导出的数据，请先导入素材。", "提示",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-        }
-        else
-        {
-            System.Windows.MessageBox.Show(
-                $"导出完成 ({paths.Count} 个文件):\n\n{string.Join("\n", paths)}",
-                "导出成功",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-        }
+        MessageBox.Show(paths.Count > 0
+            ? $"导出完成:\n{string.Join("\n", paths)}"
+            : "没有可导出的数据。", paths.Count > 0 ? "导出成功" : "提示");
     }
 
     [RelayCommand]

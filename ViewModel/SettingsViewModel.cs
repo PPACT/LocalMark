@@ -9,16 +9,20 @@ namespace LocalMark.ViewModel;
 public partial class SettingsViewModel : ObservableObject
 {
     [ObservableProperty] private string _outputDir = "";
+    [ObservableProperty] private string _exportFormat = "LocalMark";
     [ObservableProperty] private string _ollamaHost = "";
     [ObservableProperty] private string _ollamaModel = "";
     [ObservableProperty] private string _textAiEndpoint = "";
     [ObservableProperty] private string _textAiApiKey = "";
     [ObservableProperty] private string _textAiModel = "";
 
+    public List<string> FormatOptions { get; } = ["LocalMark", "COCO", "YOLO", "VOC"];
+
     public SettingsViewModel()
     {
         var s = SettingsManager.Load();
         OutputDir = s.OutputDir;
+        ExportFormat = s.ExportFormat;
         OllamaHost = s.Ollama.Host;
         OllamaModel = s.Ollama.Model;
         TextAiEndpoint = s.TextAi.Endpoint;
@@ -40,6 +44,7 @@ public partial class SettingsViewModel : ObservableObject
         var s = new AppSettings
         {
             OutputDir = OutputDir.Trim(),
+            ExportFormat = ExportFormat,
             Ollama = new OllamaConfig { Host = OllamaHost.Trim(), Model = OllamaModel.Trim() },
             TextAi = new TextAiConfig { Endpoint = TextAiEndpoint.Trim(), ApiKey = TextAiApiKey.Trim(), Model = TextAiModel.Trim() }
         };

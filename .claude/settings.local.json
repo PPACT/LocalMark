@@ -22,7 +22,21 @@
       "Bash(git reset *)",
       "Bash(dotnet run *)",
       "Bash(dotnet clean *)",
-      "Bash(rm -rf obj bin)"
+      "Bash(rm -rf obj bin)",
+      "Bash(cp \"D:\\\\Code\\\\Test\\\\LocalMark\\\\Converters\\\\*.cs\" \"Converters\\\\\" && cp \"D:\\\\Code\\\\Test\\\\LocalMark\\\\View\\\\DuplicateDialog.*\" \"View\\\\\")",
+      "Bash(cp \"D:\\\\Code\\\\Test\\\\LocalMark\\\\View\\\\SettingsView.*\" \"View\\\\\" && echo \"files copied\")",
+      "Read(//d/Code/Test/**)",
+      "Bash(cp LocalMark/MainWindow.xaml LocalMark_original/MainWindow.xaml)",
+      "Bash(cp LocalMark/MainWindow.xaml.cs LocalMark_original/MainWindow.xaml.cs)",
+      "Bash(sed -i '/<cvt:BoolInvertConverter/{d}' MainWindow.xaml)",
+      "Bash(sed -i '/<cvt:BoolToVisibilityConverter/{d}' MainWindow.xaml)",
+      "Bash(sed -i '/🤖 批量 AI 标注/{d}' MainWindow.xaml)",
+      "Bash(sed -i '/Style x:Key=\"AiBtn\"/,/\\\\/Style>/{d}' MainWindow.xaml)",
+      "Bash(sed -i '/Style x:Key=\"BatchBtn\"/,/\\\\/Style>/{d}' MainWindow.xaml)",
+      "Bash(sed -i '/xmlns:vm=/{d}' MainWindow.xaml)",
+      "Bash(cp \"D:/Code/Test/LocalMark/View/ImageMarkView.xaml\" \"View/ImageMarkView.xaml\")",
+      "Bash(sed -i '/🤖 AI 标注/,/ToolTip/{/🤖 AI 标注/d;/Style=.*AiBtn/d;/IsEnabled.*AiRunning/d;/ToolTip/d}' View/ImageMarkView.xaml)",
+      "Bash(sed -i '/AI 分析中/,/Margin=\\\\\"10,0,0,0\\\\\"/{d}' View/ImageMarkView.xaml)"
     ]
   }
 }
