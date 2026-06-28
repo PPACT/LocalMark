@@ -218,6 +218,9 @@
                             <Button Content="📥 导入数据集" Command="{Binding ImportDatasetCommand}"
                                     Style="{StaticResource ToolBtn}" Margin="6,0,0,0"
                                     ToolTip="导入 COCO / YOLO / VOC 标注数据集" />
+                            <Button Content="🔄 格式转换" Command="{Binding ConvertFormatCommand}"
+                                    Style="{StaticResource ToolBtn}" Margin="6,0,0,0"
+                                    ToolTip="COCO / YOLO / VOC 格式互转" />
                             <Separator Width="1" Margin="12,4" Background="#E0E3E8" />
                             <Button Content="✏️ 手动标注" Command="{Binding OpenMarkViewCommand}"
                                     Style="{StaticResource AccentBtn}" />

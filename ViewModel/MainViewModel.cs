@@ -457,6 +457,25 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ConvertFormat()
+    {
+        var inDlg = new OpenFolderDialog { Title = "选择源数据集文件夹" };
+        if (inDlg.ShowDialog() != true) return;
+
+        var srcFmt = FormatConverter.DetectFormat(inDlg.FolderName);
+        if (srcFmt == "Unknown")
+        { MessageBox.Show("无法识别源数据集格式。"); return; }
+
+        var outDlg = new OpenFolderDialog { Title = "选择输出目录" };
+        if (outDlg.ShowDialog() != true) return;
+
+        var count = FormatConverter.Convert(inDlg.FolderName, outDlg.FolderName);
+        MessageBox.Show(count > 0
+            ? $"转换完成: {count} 条标注 ({srcFmt} → 目标格式)"
+            : "转换失败，请检查源数据集。");
+    }
+
+    [RelayCommand]
     private void ImportDataset()
     {
         var dlg = new OpenFolderDialog { Title = "选择数据集文件夹（COCO / YOLO / VOC）" };
