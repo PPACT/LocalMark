@@ -79,10 +79,11 @@ public class OllamaAgent
     private static string BuildPrompt(List<string> labels)
     {
         var labelList = string.Join("、", labels);
-        return "逐一检查这张图片中的所有目标，每个目标独立标注一个框。"
-               + "使用以下" + labels.Count + "个标签："
+        return "检测这张图片中所有物体。每个物体单独画一个框并标记标签。"
+               + "只使用以下" + labels.Count + "个标签："
                + labelList + "。"
-               + "标注规则：每个目标单独画框（不可合并），可见部分超过50%才标注。"
+               + "重要：尽量覆盖图片中所有可见物体，每种标签都要检测，不要只检测一种。"
+               + "每个目标独立画框，可见部分超过50%才标注。"
                + "输出JSON数组，格式："
                + @"[{""label"": ""标签名"", ""bbox_2d"": [x1,y1,x2,y2]}]。"
                + "确保 x1<x2 且 y1<y2。";

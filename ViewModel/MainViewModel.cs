@@ -511,17 +511,19 @@ public partial class MainViewModel : ObservableObject
         IImportService importer;
         var path = dlg.FolderName;
 
-        // 自动检测格式
-        if (Directory.GetFiles(path, "annotations.json", SearchOption.AllDirectories).Any())
+        // 自动检测格式：按行业标准目录结构识别
+        bool HasFile(string name) => Directory.EnumerateFiles(path, name, SearchOption.AllDirectories).Any();
+        bool HasDir(string name) => Directory.EnumerateDirectories(path, name, SearchOption.AllDirectories).Any();
+
+        if (HasFile("annotations.json") || HasFile("instances_default.json"))
             importer = new CocoImporter();
-        else if (Directory.GetDirectories(path, "labels", SearchOption.AllDirectories).Any()
-              || File.Exists(Path.Combine(path, "data.yaml")))
+        else if (HasDir("labels") || HasFile("data.yaml"))
             importer = new YoloImporter();
-        else if (Directory.GetDirectories(path, "Annotations", SearchOption.AllDirectories).Any())
+        else if (HasDir("Annotations") || HasDir("annotations"))
             importer = new VocImporter();
         else
         {
-            MessageBox.Show("无法识别数据集格式。请选择包含 annotations.json / labels/ / Annotations/ 的文件夹。", "提示");
+            MessageBox.Show("无法识别数据集格式。\n\n支持的格式：\n  COCO  - 文件夹含 annotations.json\n  YOLO  - 文件夹含 labels/ 目录或 data.yaml\n  VOC   - 文件夹含 Annotations/ 目录", "提示");
             return;
         }
 
