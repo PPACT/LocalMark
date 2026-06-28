@@ -18,11 +18,18 @@ public class VocExporter : IExportService
         var root = Path.Combine(outputDir, $"voc_{DateTime.Now:yyyyMMdd_HHmmss}");
         var imgDir = Path.Combine(root, "JPEGImages");
         var annDir = Path.Combine(root, "Annotations");
+        var setDir = Path.Combine(root, "ImageSets", "Main");
         Directory.CreateDirectory(imgDir);
         Directory.CreateDirectory(annDir);
+        Directory.CreateDirectory(setDir);
 
-        foreach (var s in srcList)
+        var trainNames = new List<string>();
+        var valNames = new List<string>();
+        var split = (int)(srcList.Count * 0.8);
+
+        for (int idx = 0; idx < srcList.Count; idx++)
         {
+            var s = srcList[idx];
             if (!File.Exists(s.Content)) continue;
             if (!markDict.TryGetValue(s.Id, out var m) || string.IsNullOrEmpty(m.BoxPosition)) continue;
 
@@ -49,25 +56,27 @@ public class VocExporter : IExportService
             var xml = new XElement("annotation",
                 new XElement("folder", "JPEGImages"),
                 new XElement("filename", baseName + ext),
-                new XElement("path", Path.Combine(imgDir, baseName + ext)),
-                new XElement("source", new XElement("database", "LocalMark")),
                 new XElement("size",
-                    new XElement("width", iw), new XElement("height", ih),
-                    new XElement("depth", 3)),
+                    new XElement("width", iw), new XElement("height", ih), new XElement("depth", 3)),
                 xmlObjects);
 
             File.WriteAllText(Path.Combine(annDir, baseName + ".xml"), xml.ToString());
+
+            if (idx < split) trainNames.Add(baseName);
+            else valNames.Add(baseName);
         }
+
+        File.WriteAllText(Path.Combine(setDir, "train.txt"), string.Join("\n", trainNames));
+        File.WriteAllText(Path.Combine(setDir, "val.txt"), string.Join("\n", valNames));
     }
 
-    private static (int, int) GetImageSize(string path)
+    private static (int, int) GetImageSize(string p)
     {
-        try { using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+        try { using var fs = new FileStream(p, FileMode.Open, FileAccess.Read);
             var f = System.Windows.Media.Imaging.BitmapDecoder.Create(fs,
                 System.Windows.Media.Imaging.BitmapCreateOptions.None,
                 System.Windows.Media.Imaging.BitmapCacheOption.None).Frames[0];
-            return (f.PixelWidth, f.PixelHeight); }
-        catch { return (0, 0); }
+            return (f.PixelWidth, f.PixelHeight); } catch { return (0, 0); }
     }
 
     private static List<Box> ParseBoxes(string json)

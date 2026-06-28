@@ -12,19 +12,44 @@ public class CocoExporter : IExportService
     {
         var srcList = sources.Where(s => s.DataType == 1 && s.IsMarked).ToList();
         var markDict = marks.ToDictionary(m => m.SourceId);
+        if (srcList.Count == 0) return;
 
         var root = Path.Combine(outputDir, $"coco_{DateTime.Now:yyyyMMdd_HHmmss}");
-        var imgDir = Path.Combine(root, "images");
-        Directory.CreateDirectory(imgDir);
+        var imgTrain = Path.Combine(root, "images", "train");
+        var imgVal = Path.Combine(root, "images", "val");
+        var annDir = Path.Combine(root, "annotations");
+        Directory.CreateDirectory(imgTrain); Directory.CreateDirectory(imgVal);
+        Directory.CreateDirectory(annDir);
 
+        int split = (int)(srcList.Count * 0.8);
+
+        var trainData = BuildSplit(srcList, markDict, 0, split, imgTrain);
+        var valData = BuildSplit(srcList, markDict, split, srcList.Count, imgVal);
+
+        var opt = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+
+        File.WriteAllText(Path.Combine(annDir, "instances_train.json"),
+            JsonSerializer.Serialize(trainData, opt));
+        File.WriteAllText(Path.Combine(annDir, "instances_val.json"),
+            JsonSerializer.Serialize(valData, opt));
+    }
+
+    private static object BuildSplit(List<SourceData> srcList,
+        Dictionary<int, MarkResult> markDict, int start, int end, string imgDir)
+    {
         var categories = new List<object>();
         var catMap = new Dictionary<string, int>();
         var annotations = new List<object>();
         var images = new List<object>();
         int annoId = 1, imgId = 1;
 
-        foreach (var s in srcList)
+        for (int idx = start; idx < end && idx < srcList.Count; idx++)
         {
+            var s = srcList[idx];
             if (!File.Exists(s.Content)) continue;
             if (!markDict.TryGetValue(s.Id, out var m) || string.IsNullOrEmpty(m.BoxPosition)) continue;
 
@@ -32,14 +57,13 @@ public class CocoExporter : IExportService
             if (w == 0 || h == 0) continue;
 
             var destName = Path.GetFileName(s.Content);
-            var destPath = Path.Combine(imgDir, destName);
-            File.Copy(s.Content, destPath, true);
+            File.Copy(s.Content, Path.Combine(imgDir, destName), true);
 
-            images.Add(new { id = imgId, file_name = destName, width = w, height = h });
+            images.Add(new { id = imgId, width = w, height = h, file_name = destName });
 
             if (!catMap.TryGetValue(m.LabelName, out var catId))
             {
-                catId = catMap.Count + 1;
+                catId = catMap.Count;
                 catMap[m.LabelName] = catId;
                 categories.Add(new { id = catId, name = m.LabelName });
             }
@@ -53,10 +77,7 @@ public class CocoExporter : IExportService
             imgId++;
         }
 
-        File.WriteAllText(Path.Combine(root, "annotations.json"),
-            JsonSerializer.Serialize(new { images, annotations, categories },
-                new JsonSerializerOptions { WriteIndented = true,
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+        return new { images, annotations, categories };
     }
 
     private static (int, int) GetImageSize(string path)
@@ -65,8 +86,7 @@ public class CocoExporter : IExportService
             var f = System.Windows.Media.Imaging.BitmapDecoder.Create(fs,
                 System.Windows.Media.Imaging.BitmapCreateOptions.None,
                 System.Windows.Media.Imaging.BitmapCacheOption.None).Frames[0];
-            return (f.PixelWidth, f.PixelHeight); }
-        catch { return (0, 0); }
+            return (f.PixelWidth, f.PixelHeight); } catch { return (0, 0); }
     }
 
     private static List<Box> ParseBoxes(string json)

@@ -16,26 +16,31 @@ public class YoloExporter : IExportService
         if (srcList.Count == 0) return;
 
         var root = Path.Combine(outputDir, $"yolo_{DateTime.Now:yyyyMMdd_HHmmss}");
-        var imgDir = Path.Combine(root, "images");
-        var lblDir = Path.Combine(root, "labels");
-        Directory.CreateDirectory(imgDir);
-        Directory.CreateDirectory(lblDir);
+        var imgTrain = Path.Combine(root, "images", "train");
+        var imgVal = Path.Combine(root, "images", "val");
+        var lblTrain = Path.Combine(root, "labels", "train");
+        var lblVal = Path.Combine(root, "labels", "val");
+        Directory.CreateDirectory(imgTrain); Directory.CreateDirectory(imgVal);
+        Directory.CreateDirectory(lblTrain); Directory.CreateDirectory(lblVal);
 
         var catMap = new Dictionary<string, int>();
         int nextCat = 0;
         var fileNames = new List<string>();
+        var split = (int)(srcList.Count * 0.8);
 
-        foreach (var s in srcList)
+        for (int idx = 0; idx < srcList.Count; idx++)
         {
+            var s = srcList[idx];
+            var isTrain = idx < split;
             if (!File.Exists(s.Content)) continue;
             if (!markDict.TryGetValue(s.Id, out var m) || string.IsNullOrEmpty(m.BoxPosition)) continue;
 
             var (iw, ih) = GetImageSize(s.Content);
             if (iw == 0 || ih == 0) continue;
 
-            var baseName = Path.GetFileNameWithoutExtension(s.Content);
             var ext = Path.GetExtension(s.Content);
-            var destImg = Path.Combine(imgDir, baseName + ext);
+            var destName = $"{Path.GetFileNameWithoutExtension(s.Content)}{ext}";
+            var destImg = Path.Combine(isTrain ? imgTrain : imgVal, destName);
             File.Copy(s.Content, destImg, true);
 
             var lines = new List<string>();
@@ -50,25 +55,16 @@ public class YoloExporter : IExportService
                 lines.Add($"{cid} {cx:F6} {cy:F6} {nw:F6} {nh:F6}");
             }
 
-            File.WriteAllText(Path.Combine(lblDir, baseName + ".txt"), string.Join("\n", lines));
-            fileNames.Add(baseName + ext);
+            var lblDest = Path.Combine(isTrain ? lblTrain : lblVal,
+                Path.GetFileNameWithoutExtension(s.Content) + ".txt");
+            File.WriteAllText(lblDest, string.Join("\n", lines));
+            fileNames.Add(destName);
         }
 
-        // data.yaml
+        // classes.txt
         var ordered = catMap.OrderBy(x => x.Value).ToList();
-        var yaml = new StringBuilder();
-        yaml.AppendLine($"path: {root.Replace('\\', '/')}");
-        yaml.AppendLine("train: train.txt");
-        yaml.AppendLine("val: val.txt");
-        yaml.AppendLine($"nc: {ordered.Count}");
-        yaml.AppendLine("names:");
-        foreach (var kv in ordered) yaml.AppendLine($"  {kv.Value}: {kv.Key}");
-        File.WriteAllText(Path.Combine(root, "data.yaml"), yaml.ToString());
-
-        // train/val split (80/20)
-        var split = (int)(fileNames.Count * 0.8);
-        File.WriteAllText(Path.Combine(root, "train.txt"), string.Join("\n", fileNames.Take(split)));
-        File.WriteAllText(Path.Combine(root, "val.txt"), string.Join("\n", fileNames.Skip(split)));
+        File.WriteAllText(Path.Combine(root, "classes.txt"),
+            string.Join("\n", ordered.Select(kv => kv.Key)));
     }
 
     private static (int, int) GetImageSize(string path)
@@ -77,8 +73,7 @@ public class YoloExporter : IExportService
             var f = System.Windows.Media.Imaging.BitmapDecoder.Create(fs,
                 System.Windows.Media.Imaging.BitmapCreateOptions.None,
                 System.Windows.Media.Imaging.BitmapCacheOption.None).Frames[0];
-            return (f.PixelWidth, f.PixelHeight); }
-        catch { return (0, 0); }
+            return (f.PixelWidth, f.PixelHeight); } catch { return (0, 0); }
     }
 
     private static List<Box> ParseBoxes(string json)
