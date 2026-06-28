@@ -8,9 +8,10 @@ namespace LocalMark.Repository;
 /// </summary>
 public static class DbInitializer
 {
-    public const string DbPath = "localmark.db";
+    public static string DbPath =>
+        Environment.GetEnvironmentVariable("LOCALMARK_TEST_DB") ?? "localmark.db";
 
-    private static string ConnectionString => $"Data Source={DbPath}";
+    public static string GetConnectionString() => $"Data Source={DbPath}";
 
     public static void Initialize()
     {
@@ -27,7 +28,7 @@ public static class DbInitializer
 
     private static void Migrate()
     {
-        using var conn = new SqliteConnection(ConnectionString);
+        using var conn = new SqliteConnection(GetConnectionString());
         conn.Open();
         // 为旧数据库补充 SourceName 列
         try
@@ -47,11 +48,9 @@ public static class DbInitializer
         catch { }
     }
 
-    public static string GetConnectionString() => ConnectionString;
-
     private static void CreateTables()
     {
-        using var connection = new SqliteConnection(ConnectionString);
+        using var connection = new SqliteConnection(GetConnectionString());
         connection.Open();
 
         var cmd = connection.CreateCommand();

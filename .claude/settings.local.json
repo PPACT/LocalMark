@@ -36,7 +36,13 @@
       "Bash(sed -i '/xmlns:vm=/{d}' MainWindow.xaml)",
       "Bash(cp \"D:/Code/Test/LocalMark/View/ImageMarkView.xaml\" \"View/ImageMarkView.xaml\")",
       "Bash(sed -i '/🤖 AI 标注/,/ToolTip/{/🤖 AI 标注/d;/Style=.*AiBtn/d;/IsEnabled.*AiRunning/d;/ToolTip/d}' View/ImageMarkView.xaml)",
-      "Bash(sed -i '/AI 分析中/,/Margin=\\\\\"10,0,0,0\\\\\"/{d}' View/ImageMarkView.xaml)"
+      "Bash(sed -i '/AI 分析中/,/Margin=\\\\\"10,0,0,0\\\\\"/{d}' View/ImageMarkView.xaml)",
+      "Bash(dotnet new *)",
+      "Bash(dotnet test *)",
+      "Bash(rm -f tests/LocalMark.Tests/UnitTest1.cs)",
+      "Bash(dotnet restore *)",
+      "Bash(rm -rf \"D:/Code/Test/LocalMark/tests\")",
+      "Bash(mkdir -p \"D:/Code/Test/LocalMark/tests/LocalMark.Tests\")"
     ]
   }
 }

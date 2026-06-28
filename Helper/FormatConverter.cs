@@ -53,12 +53,22 @@ public static class FormatConverter
 
     public static string DetectFormat(string path)
     {
-        bool HasFile(string n) => Directory.EnumerateFiles(path, n, SearchOption.AllDirectories).Any();
         bool HasDir(string n) => Directory.EnumerateDirectories(path, n, SearchOption.AllDirectories).Any();
+        bool HasJsonInDir(string dirName)
+        {
+            var d = Path.Combine(path, dirName);
+            if (!Directory.Exists(d)) return false;
+            return Directory.EnumerateFiles(d, "*.json", SearchOption.AllDirectories).Any();
+        }
 
-        if (HasFile("annotations.json") || HasFile("instances_default.json")) return "COCO";
-        if (HasDir("labels") || HasFile("data.yaml")) return "YOLO";
-        if (HasDir("Annotations") || HasDir("annotations")) return "VOC";
+        if (HasJsonInDir("annotations") || File.Exists(Path.Combine(path, "annotations.json"))
+         || Directory.EnumerateFiles(path, "annotations.json", SearchOption.AllDirectories).Any()
+         || Directory.EnumerateFiles(path, "instances_*.json", SearchOption.AllDirectories).Any())
+            return "COCO";
+        if (HasDir("labels") || File.Exists(Path.Combine(path, "data.yaml")) || File.Exists(Path.Combine(path, "classes.txt")))
+            return "YOLO";
+        if (HasDir("Annotations"))
+            return "VOC";
         return "Unknown";
     }
 
