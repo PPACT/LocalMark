@@ -417,8 +417,8 @@ public partial class MainViewModel : ObservableObject
         }
 
         MessageBox.Show(paths.Count > 0
-            ? $"导出完成:\n{string.Join("\n", paths)}"
-            : "没有可导出的数据。", paths.Count > 0 ? "导出成功" : "提示");
+            ? $"导出完成:\n输出目录: {outputDir}\n格式: {settings.ExportFormat}\n{string.Join("\n", paths)}"
+            : "没有已标注的数据可导出。请先标注素材。", paths.Count > 0 ? "导出成功" : "提示");
     }
 
     [RelayCommand]

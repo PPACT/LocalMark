@@ -3,7 +3,7 @@ namespace LocalMark.Model;
 public class AppSettings
 {
     public string OutputDir { get; set; } = "";
-    public string ExportFormat { get; set; } = "LocalMark";
+    public string ExportFormat { get; set; } = "COCO";
     public OllamaConfig Ollama { get; set; } = new();
     public TextAiConfig TextAi { get; set; } = new();
 }

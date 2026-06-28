@@ -9,7 +9,7 @@ namespace LocalMark.ViewModel;
 public partial class SettingsViewModel : ObservableObject
 {
     [ObservableProperty] private string _outputDir = "";
-    [ObservableProperty] private string _exportFormat = "LocalMark";
+    [ObservableProperty] private string _exportFormat = "COCO";
     [ObservableProperty] private string _ollamaHost = "";
     [ObservableProperty] private string _ollamaModel = "";
     [ObservableProperty] private string _textAiEndpoint = "";
