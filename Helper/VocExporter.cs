@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
 using LocalMark.Model;
@@ -13,13 +12,14 @@ public class VocExporter : IExportService
     public void Export(IEnumerable<SourceData> sources, IEnumerable<MarkResult> marks, string outputDir)
     {
         var srcList = sources.Where(s => s.DataType == 1 && s.IsMarked).ToList();
-        var markDict = marks.Where(m => srcList.Any(s => s.Id == m.SourceId))
-            .ToDictionary(m => m.SourceId);
-
+        var markDict = marks.ToDictionary(m => m.SourceId);
         if (srcList.Count == 0) return;
 
-        var dir = Path.Combine(outputDir, $"voc_{DateTime.Now:yyyyMMdd_HHmmss}");
-        Directory.CreateDirectory(dir);
+        var root = Path.Combine(outputDir, $"voc_{DateTime.Now:yyyyMMdd_HHmmss}");
+        var imgDir = Path.Combine(root, "JPEGImages");
+        var annDir = Path.Combine(root, "Annotations");
+        Directory.CreateDirectory(imgDir);
+        Directory.CreateDirectory(annDir);
 
         foreach (var s in srcList)
         {
@@ -29,10 +29,11 @@ public class VocExporter : IExportService
             var (iw, ih) = GetImageSize(s.Content);
             if (iw == 0 || ih == 0) continue;
 
-            var boxes = ParseBoxes(m.BoxPosition);
-            if (boxes.Count == 0) continue;
+            var baseName = Path.GetFileNameWithoutExtension(s.Content);
+            var ext = Path.GetExtension(s.Content);
+            File.Copy(s.Content, Path.Combine(imgDir, baseName + ext), true);
 
-            var xmlObjects = boxes.Select(box =>
+            var xmlObjects = ParseBoxes(m.BoxPosition).Select(box =>
             {
                 var xmin = (int)Math.Max(0, Math.Min(box.X, iw - 1));
                 var ymin = (int)Math.Max(0, Math.Min(box.Y, ih - 1));
@@ -41,43 +42,38 @@ public class VocExporter : IExportService
                 return new XElement("object",
                     new XElement("name", box.Label ?? m.LabelName),
                     new XElement("bndbox",
-                        new XElement("xmin", xmin),
-                        new XElement("ymin", ymin),
-                        new XElement("xmax", xmax),
-                        new XElement("ymax", ymax)));
+                        new XElement("xmin", xmin), new XElement("ymin", ymin),
+                        new XElement("xmax", xmax), new XElement("ymax", ymax)));
             });
 
             var xml = new XElement("annotation",
-                new XElement("filename", Path.GetFileName(s.Content)),
+                new XElement("folder", "JPEGImages"),
+                new XElement("filename", baseName + ext),
+                new XElement("path", Path.Combine(imgDir, baseName + ext)),
+                new XElement("source", new XElement("database", "LocalMark")),
                 new XElement("size",
-                    new XElement("width", iw),
-                    new XElement("height", ih)),
+                    new XElement("width", iw), new XElement("height", ih),
+                    new XElement("depth", 3)),
                 xmlObjects);
 
-            var path = Path.Combine(dir, Path.GetFileNameWithoutExtension(s.Content) + ".xml");
-            File.WriteAllText(path, xml.ToString());
+            File.WriteAllText(Path.Combine(annDir, baseName + ".xml"), xml.ToString());
         }
     }
 
-    private static (int w, int h) GetImageSize(string path)
+    private static (int, int) GetImageSize(string path)
     {
-        try
-        {
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+        try { using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
             var f = System.Windows.Media.Imaging.BitmapDecoder.Create(fs,
                 System.Windows.Media.Imaging.BitmapCreateOptions.None,
                 System.Windows.Media.Imaging.BitmapCacheOption.None).Frames[0];
-            return (f.PixelWidth, f.PixelHeight);
-        }
+            return (f.PixelWidth, f.PixelHeight); }
         catch { return (0, 0); }
     }
 
     private static List<Box> ParseBoxes(string json)
     {
-        try { var list = JsonSerializer.Deserialize<List<Box>>(json); if (list != null) return list; }
-        catch { }
-        try { var single = JsonSerializer.Deserialize<Box>(json); if (single != null) return [single]; }
-        catch { }
+        try { var l = JsonSerializer.Deserialize<List<Box>>(json); if (l != null) return l; } catch { }
+        try { var s = JsonSerializer.Deserialize<Box>(json); if (s != null) return [s]; } catch { }
         return [];
     }
 

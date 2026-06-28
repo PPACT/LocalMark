@@ -11,8 +11,11 @@ public class CocoExporter : IExportService
     public void Export(IEnumerable<SourceData> sources, IEnumerable<MarkResult> marks, string outputDir)
     {
         var srcList = sources.Where(s => s.DataType == 1 && s.IsMarked).ToList();
-        var markDict = marks.Where(m => srcList.Any(s => s.Id == m.SourceId))
-            .ToDictionary(m => m.SourceId);
+        var markDict = marks.ToDictionary(m => m.SourceId);
+
+        var root = Path.Combine(outputDir, $"coco_{DateTime.Now:yyyyMMdd_HHmmss}");
+        var imgDir = Path.Combine(root, "images");
+        Directory.CreateDirectory(imgDir);
 
         var categories = new List<object>();
         var catMap = new Dictionary<string, int>();
@@ -28,7 +31,11 @@ public class CocoExporter : IExportService
             var (w, h) = GetImageSize(s.Content);
             if (w == 0 || h == 0) continue;
 
-            images.Add(new { id = imgId, file_name = Path.GetFileName(s.Content), width = w, height = h });
+            var destName = Path.GetFileName(s.Content);
+            var destPath = Path.Combine(imgDir, destName);
+            File.Copy(s.Content, destPath, true);
+
+            images.Add(new { id = imgId, file_name = destName, width = w, height = h });
 
             if (!catMap.TryGetValue(m.LabelName, out var catId))
             {
@@ -37,67 +44,42 @@ public class CocoExporter : IExportService
                 categories.Add(new { id = catId, name = m.LabelName });
             }
 
-            var boxes = ParseBoxes(m.BoxPosition);
-            if (boxes.Count == 0) { imgId++; continue; }
-
-            foreach (var box in boxes)
+            foreach (var box in ParseBoxes(m.BoxPosition))
             {
                 var (bx, by, bw, bh) = ClampBox(box.X, box.Y, box.Width, box.Height, w, h);
-                annotations.Add(new
-                {
-                    id = annoId++, image_id = imgId, category_id = catId,
-                    bbox = new[] { bx, by, bw, bh }, area = bw * bh, iscrowd = 0
-                });
+                annotations.Add(new { id = annoId++, image_id = imgId, category_id = catId,
+                    bbox = new[] { bx, by, bw, bh }, area = bw * bh, iscrowd = 0 });
             }
-
             imgId++;
         }
 
-        var coco = new { images, annotations, categories };
-        var json = JsonSerializer.Serialize(coco, new JsonSerializerOptions { WriteIndented = true });
-        var path = Path.Combine(outputDir, $"coco_{DateTime.Now:yyyyMMdd_HHmmss}.json");
-        File.WriteAllText(path, json);
+        File.WriteAllText(Path.Combine(root, "annotations.json"),
+            JsonSerializer.Serialize(new { images, annotations, categories },
+                new JsonSerializerOptions { WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
     }
 
-    private static (int w, int h) GetImageSize(string path)
+    private static (int, int) GetImageSize(string path)
     {
-        try
-        {
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
-            var frame = System.Windows.Media.Imaging.BitmapDecoder.Create(fs,
+        try { using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+            var f = System.Windows.Media.Imaging.BitmapDecoder.Create(fs,
                 System.Windows.Media.Imaging.BitmapCreateOptions.None,
                 System.Windows.Media.Imaging.BitmapCacheOption.None).Frames[0];
-            return (frame.PixelWidth, frame.PixelHeight);
-        }
+            return (f.PixelWidth, f.PixelHeight); }
         catch { return (0, 0); }
     }
 
     private static List<Box> ParseBoxes(string json)
     {
-        try
-        {
-            // 新格式: 多框数组
-            var list = JsonSerializer.Deserialize<List<Box>>(json);
-            if (list != null) return list;
-        }
-        catch { }
-        try
-        {
-            // 兼容旧格式: 单框
-            var single = JsonSerializer.Deserialize<Box>(json);
-            if (single != null) return [single];
-        }
-        catch { }
+        try { var l = JsonSerializer.Deserialize<List<Box>>(json); if (l != null) return l; } catch { }
+        try { var s = JsonSerializer.Deserialize<Box>(json); if (s != null) return [s]; } catch { }
         return [];
     }
 
-    private static (double x, double y, double w, double h) ClampBox(
-        double x, double y, double w, double h, int imgW, int imgH)
+    private static (double, double, double, double) ClampBox(double x, double y, double w, double h, int iw, int ih)
     {
-        x = Math.Max(0, Math.Min(x, imgW - 1));
-        y = Math.Max(0, Math.Min(y, imgH - 1));
-        w = Math.Max(1, Math.Min(w, imgW - x));
-        h = Math.Max(1, Math.Min(h, imgH - y));
+        x = Math.Max(0, Math.Min(x, iw - 1)); y = Math.Max(0, Math.Min(y, ih - 1));
+        w = Math.Max(1, Math.Min(w, iw - x)); h = Math.Max(1, Math.Min(h, ih - y));
         return (x, y, w, h);
     }
 
