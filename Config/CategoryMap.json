@@ -1,0 +1,5 @@
+{
+  "行人": { "coco": "person", "yolo": 0, "voc": "person" },
+  "机动车": { "coco": "car", "yolo": 1, "voc": "car" },
+  "非机动车": { "coco": "bicycle", "yolo": 2, "voc": "bicycle" }
+}

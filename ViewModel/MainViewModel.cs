@@ -457,6 +457,33 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void RunQualityCheck()
+    {
+        var sources = _sourceRepo.GetAll().ToList();
+        var marks = _markRepo.GetAll().ToList();
+        var issues = QualityChecker.Check(sources, marks);
+
+        if (issues.Count == 0)
+        {
+            MessageBox.Show($"质检通过！共检查 {sources.Count(s => s.DataType == 1)} 张图片，无异常。", "质检结果");
+            return;
+        }
+
+        var summary = $"发现 {issues.Count} 个问题:\n\n" +
+            $"{"类型",-8} {"文件名",-25} {"详情"}\n" +
+            new string('-', 60) + "\n" +
+            string.Join("\n", issues.Take(20).Select(i =>
+                $"{i.Type,-8} {Truncate(i.FileName, 25),-25} {i.Detail}"));
+
+        if (issues.Count > 20)
+            summary += $"\n\n... 还有 {issues.Count - 20} 个问题";
+
+        MessageBox.Show(summary, $"质检结果 — {issues.Count} 个问题");
+    }
+
+    private static string Truncate(string s, int len) => s.Length <= len ? s : s[..(len - 3)] + "...";
+
+    [RelayCommand]
     private void ConvertFormat()
     {
         var inDlg = new OpenFolderDialog { Title = "选择源数据集文件夹" };

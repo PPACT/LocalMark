@@ -221,6 +221,9 @@
                             <Button Content="🔄 格式转换" Command="{Binding ConvertFormatCommand}"
                                     Style="{StaticResource ToolBtn}" Margin="6,0,0,0"
                                     ToolTip="COCO / YOLO / VOC 格式互转" />
+                            <Button Content="🔍 质检" Command="{Binding RunQualityCheckCommand}"
+                                    Style="{StaticResource ToolBtn}" Margin="6,0,0,0"
+                                    ToolTip="批量校验漏标/越界/过小等异常" />
                             <Separator Width="1" Margin="12,4" Background="#E0E3E8" />
                             <Button Content="✏️ 手动标注" Command="{Binding OpenMarkViewCommand}"
                                     Style="{StaticResource AccentBtn}" />
