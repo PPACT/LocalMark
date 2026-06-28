@@ -457,6 +457,53 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ImportDataset()
+    {
+        var dlg = new OpenFolderDialog { Title = "选择数据集文件夹（COCO / YOLO / VOC）" };
+        if (dlg.ShowDialog() != true) return;
+
+        IImportService importer;
+        var path = dlg.FolderName;
+
+        // 自动检测格式
+        if (Directory.GetFiles(path, "annotations.json", SearchOption.AllDirectories).Any())
+            importer = new CocoImporter();
+        else if (Directory.GetDirectories(path, "labels", SearchOption.AllDirectories).Any()
+              || File.Exists(Path.Combine(path, "data.yaml")))
+            importer = new YoloImporter();
+        else if (Directory.GetDirectories(path, "Annotations", SearchOption.AllDirectories).Any())
+            importer = new VocImporter();
+        else
+        {
+            MessageBox.Show("无法识别数据集格式。请选择包含 annotations.json / labels/ / Annotations/ 的文件夹。", "提示");
+            return;
+        }
+
+        var imported = importer.Import(path);
+        if (imported.Count == 0)
+        { MessageBox.Show("未找到可导入的标注数据。", "提示"); return; }
+
+        foreach (var r in imported)
+        {
+            var sid = _sourceRepo.Insert(r.Source);
+            if (r.Boxes.Count > 0)
+            {
+                var boxJson = System.Text.Json.JsonSerializer.Serialize(r.Boxes);
+                _markRepo.Insert(new MarkResult
+                {
+                    SourceId = sid,
+                    LabelName = r.Boxes[0].Label,
+                    BoxPosition = boxJson,
+                    MarkedAt = DateTime.Now
+                });
+            }
+        }
+
+        RefreshSourcesAndFlash();
+        MessageBox.Show($"导入完成: {imported.Count} 条素材。打开标注窗口即可回显。", "导入成功");
+    }
+
+    [RelayCommand]
     private void OpenSettings()
     {
         var vm = new SettingsViewModel();
