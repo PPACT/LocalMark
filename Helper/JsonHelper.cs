@@ -17,7 +17,8 @@ public static class JsonHelper
         string outputDir, string? dateSuffix = null)
     {
         var date = dateSuffix ?? DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        var path = Path.Combine(outputDir, $"文本标注_{date}.json");
+        var dir = Path.Combine(outputDir, "localmark"); Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, $"文本标注_{date}.json");
 
         var list = sources.Where(s => s.DataType == 0).ToList();
         var markDict = marks.ToDictionary(m => m.SourceId);
@@ -61,7 +62,8 @@ public static class JsonHelper
         string outputDir, string? dateSuffix = null)
     {
         var date = dateSuffix ?? DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        var path = Path.Combine(outputDir, $"图片标注_{date}.json");
+        var dir = Path.Combine(outputDir, "localmark"); Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, $"图片标注_{date}.json");
 
         var list = sources.Where(s => s.DataType == 1).ToList();
         var markDict = marks.ToDictionary(m => m.SourceId);

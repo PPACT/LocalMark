@@ -398,15 +398,15 @@ public partial class MainViewModel : ObservableObject
         {
             case "COCO":
                 new CocoExporter().Export(sources, marks, outputDir);
-                paths.Add("coco_*/ (images/train+val + annotations/)");
+                paths.Add($"{outputDir}\\coco\\");
                 break;
             case "YOLO":
                 new YoloExporter().Export(sources, marks, outputDir);
-                paths.Add("yolo_*/ (images/ + labels/ + classes.txt)");
+                paths.Add($"{outputDir}\\yolo\\");
                 break;
             case "VOC":
                 new VocExporter().Export(sources, marks, outputDir);
-                paths.Add("voc_*/ (JPEGImages/ + Annotations/ + ImageSets/)");
+                paths.Add($"{outputDir}\\voc\\");
                 break;
             default:
                 if (sources.Any(s => s.DataType == 0))

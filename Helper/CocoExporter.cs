@@ -14,7 +14,7 @@ public class CocoExporter : IExportService
         var markDict = marks.ToDictionary(m => m.SourceId);
         if (srcList.Count == 0) return;
 
-        var root = Path.Combine(outputDir, $"coco_{DateTime.Now:yyyyMMdd_HHmmss}");
+        var root = Path.Combine(outputDir, "coco", DateTime.Now.ToString("yyyyMMdd_HHmmss"));
         var imgTrain = Path.Combine(root, "images", "train");
         var imgVal = Path.Combine(root, "images", "val");
         var annDir = Path.Combine(root, "annotations");

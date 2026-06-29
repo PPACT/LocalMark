@@ -42,7 +42,8 @@
       "Bash(rm -f tests/LocalMark.Tests/UnitTest1.cs)",
       "Bash(dotnet restore *)",
       "Bash(rm -rf \"D:/Code/Test/LocalMark/tests\")",
-      "Bash(mkdir -p \"D:/Code/Test/LocalMark/tests/LocalMark.Tests\")"
+      "Bash(mkdir -p \"D:/Code/Test/LocalMark/tests/LocalMark.Tests\")",
+      "Bash(grep -v \"^total\\\\|^drwx.* \\\\.$\")"
     ]
   }
 }

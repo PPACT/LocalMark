@@ -15,7 +15,7 @@ public class VocExporter : IExportService
         var markDict = marks.ToDictionary(m => m.SourceId);
         if (srcList.Count == 0) return;
 
-        var root = Path.Combine(outputDir, $"voc_{DateTime.Now:yyyyMMdd_HHmmss}");
+        var root = Path.Combine(outputDir, "voc", DateTime.Now.ToString("yyyyMMdd_HHmmss"));
         var imgDir = Path.Combine(root, "JPEGImages");
         var annDir = Path.Combine(root, "Annotations");
         var setDir = Path.Combine(root, "ImageSets", "Main");

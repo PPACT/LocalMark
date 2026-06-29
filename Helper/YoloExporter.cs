@@ -15,7 +15,7 @@ public class YoloExporter : IExportService
         var markDict = marks.ToDictionary(m => m.SourceId);
         if (srcList.Count == 0) return;
 
-        var root = Path.Combine(outputDir, $"yolo_{DateTime.Now:yyyyMMdd_HHmmss}");
+        var root = Path.Combine(outputDir, "yolo", DateTime.Now.ToString("yyyyMMdd_HHmmss"));
         var imgTrain = Path.Combine(root, "images", "train");
         var imgVal = Path.Combine(root, "images", "val");
         var lblTrain = Path.Combine(root, "labels", "train");
