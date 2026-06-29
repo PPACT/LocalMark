@@ -48,6 +48,16 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private BatchAiMarkViewModel? _batchVm;
     [ObservableProperty] private bool _isBatching;
 
+    // Export
+    public List<string> ExportFormats { get; } = ["COCO", "YOLO", "VOC", "LocalMark"];
+    [ObservableProperty] private string _selectedExportFormat = "COCO";
+
+    // Convert
+    [ObservableProperty] private string _convertSourcePath = "";
+    [ObservableProperty] private string _convertSourceFormat = "";
+    [ObservableProperty] private string _convertTargetFormat = "YOLO";
+    [ObservableProperty] private string _convertOutputDir = "";
+
     public MainViewModel(SourceRepo sourceRepo, MarkRepo markRepo)
     {
         _sourceRepo = sourceRepo;
@@ -382,43 +392,26 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ExportToJson()
     {
-        var settings = SettingsManager.Load();
-        var outputDir = !string.IsNullOrWhiteSpace(settings.OutputDir)
-            ? settings.OutputDir
-            : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "exports");
-
-        if (!Directory.Exists(outputDir))
-            Directory.CreateDirectory(outputDir);
+        var st = SettingsManager.Load();
+        var outputDir = !string.IsNullOrWhiteSpace(st.OutputDir)
+            ? st.OutputDir : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "exports");
+        Directory.CreateDirectory(outputDir);
 
         var sources = _sourceRepo.GetAll().ToList();
         var marks = _markRepo.GetAll().ToList();
-        var paths = new List<string>();
 
-        switch (settings.ExportFormat)
+        switch (SelectedExportFormat)
         {
-            case "COCO":
-                new CocoExporter().Export(sources, marks, outputDir);
-                paths.Add($"{outputDir}\\coco\\");
-                break;
-            case "YOLO":
-                new YoloExporter().Export(sources, marks, outputDir);
-                paths.Add($"{outputDir}\\yolo\\");
-                break;
-            case "VOC":
-                new VocExporter().Export(sources, marks, outputDir);
-                paths.Add($"{outputDir}\\voc\\");
-                break;
+            case "COCO": new CocoExporter().Export(sources, marks, outputDir); break;
+            case "YOLO": new YoloExporter().Export(sources, marks, outputDir); break;
+            case "VOC":  new VocExporter().Export(sources, marks, outputDir); break;
             default:
-                if (sources.Any(s => s.DataType == 0))
-                    paths.Add(JsonHelper.ExportTextResults(sources, marks, outputDir));
-                if (sources.Any(s => s.DataType == 1))
-                    paths.Add(JsonHelper.ExportImageResults(sources, marks, outputDir));
+                if (sources.Any(s => s.DataType == 0)) JsonHelper.ExportTextResults(sources, marks, outputDir);
+                if (sources.Any(s => s.DataType == 1)) JsonHelper.ExportImageResults(sources, marks, outputDir);
                 break;
         }
 
-        MessageBox.Show(paths.Count > 0
-            ? $"导出完成:\n输出目录: {outputDir}\n格式: {settings.ExportFormat}\n{string.Join("\n", paths)}"
-            : "没有已标注的数据可导出。请先标注素材。", paths.Count > 0 ? "导出成功" : "提示");
+        MessageBox.Show($"导出完成\n格式: {SelectedExportFormat}\n目录: {outputDir}\\{SelectedExportFormat.ToLower()}\\", "导出成功");
     }
 
     [RelayCommand]
@@ -484,21 +477,33 @@ public partial class MainViewModel : ObservableObject
     private static string Truncate(string s, int len) => s.Length <= len ? s : s[..(len - 3)] + "...";
 
     [RelayCommand]
+    private void BrowseConvertSource()
+    {
+        var dlg = new OpenFolderDialog { Title = "选择源数据集文件夹" };
+        if (dlg.ShowDialog() != true) return;
+        ConvertSourcePath = dlg.FolderName;
+        ConvertSourceFormat = FormatConverter.DetectFormat(ConvertSourcePath);
+        if (ConvertSourceFormat == "Unknown") ConvertSourceFormat = "未识别";
+    }
+
+    [RelayCommand]
+    private void BrowseConvertOutput()
+    {
+        var dlg = new OpenFolderDialog { Title = "选择输出目录" };
+        if (dlg.ShowDialog() == true) ConvertOutputDir = dlg.FolderName;
+    }
+
+    [RelayCommand]
     private void ConvertFormat()
     {
-        var inDlg = new OpenFolderDialog { Title = "选择源数据集文件夹" };
-        if (inDlg.ShowDialog() != true) return;
+        if (string.IsNullOrEmpty(ConvertSourcePath) || ConvertSourceFormat == "未识别" || ConvertSourceFormat == "")
+        { MessageBox.Show("请先选择有效的源数据集文件夹。"); return; }
+        if (string.IsNullOrEmpty(ConvertOutputDir))
+        { MessageBox.Show("请先选择输出目录。"); return; }
 
-        var srcFmt = FormatConverter.DetectFormat(inDlg.FolderName);
-        if (srcFmt == "Unknown")
-        { MessageBox.Show("无法识别源数据集格式。"); return; }
-
-        var outDlg = new OpenFolderDialog { Title = "选择输出目录" };
-        if (outDlg.ShowDialog() != true) return;
-
-        var count = FormatConverter.Convert(inDlg.FolderName, outDlg.FolderName);
+        var count = FormatConverter.Convert(ConvertSourcePath, ConvertOutputDir, ConvertTargetFormat);
         MessageBox.Show(count > 0
-            ? $"转换完成: {count} 条标注 ({srcFmt} → 目标格式)"
+            ? $"转换完成: {count} 条标注 ({ConvertSourceFormat} → {ConvertTargetFormat})"
             : "转换失败，请检查源数据集。");
     }
 

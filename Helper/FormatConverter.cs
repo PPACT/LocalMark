@@ -9,7 +9,7 @@ namespace LocalMark.Helper;
 /// </summary>
 public static class FormatConverter
 {
-    public static int Convert(string inputDir, string outputDir, string? targetFormat = null)
+    public static int Convert(string inputDir, string outputDir, string targetFormat)
     {
         // 1. 自动检测源格式并导入
         var (importer, srcFormat) = DetectImporter(inputDir);
@@ -43,8 +43,7 @@ public static class FormatConverter
         }
 
         // 3. 选择目标格式导出
-        var tf = targetFormat ?? (srcFormat == "COCO" ? "YOLO" : "COCO");
-        var exporter = CreateExporter(tf);
+        var exporter = CreateExporter(targetFormat);
         if (exporter == null) return 0;
 
         exporter.Export(sources, marks, outputDir);
