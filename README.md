@@ -1,4 +1,4 @@
-# LocalMark v1.0
+# LocalMark v1.1
 
 轻量化单机数据标注工具，支持文本分类标注和图片矩形框标注。
 
@@ -58,4 +58,4 @@ LocalMark/
 └── Converters/    值转换器
 ```
 
-> feature 分支更新 — 2026-06-28
+> feature 分支更新 — 2026-06-29
